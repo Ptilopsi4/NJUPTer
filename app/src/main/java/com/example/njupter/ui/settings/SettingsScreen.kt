@@ -12,6 +12,7 @@ import android.provider.Settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.BatterySaver
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -53,7 +54,7 @@ fun SettingsScreen(
     onTimetableSettingsClick: () -> Unit,
     onWidgetSettingsClick: () -> Unit,
     onToggleCurrentTimeIndicator: (Boolean) -> Unit,
-    bottomContentPadding: Dp = 0.dp
+    onBack: () -> Unit
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -173,7 +174,15 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.settings)) }
+                title = { Text(stringResource(R.string.settings)) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back)
+                        )
+                    }
+                }
             )
         }
     ) { innerPadding ->
@@ -182,7 +191,7 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp),
-            contentPadding = PaddingValues(bottom = 24.dp + bottomContentPadding),
+            contentPadding = PaddingValues(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             if (currentTimetableId == null) {
@@ -278,7 +287,8 @@ fun SettingsScreenPreview() {
             onLanguageSelectClick = {},
             onTimetableSettingsClick = {},
             onWidgetSettingsClick = {},
-            onToggleCurrentTimeIndicator = {}
+            onToggleCurrentTimeIndicator = {},
+            onBack = {}
         )
     }
 }

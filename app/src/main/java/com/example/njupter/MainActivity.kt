@@ -23,16 +23,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Scaffold
@@ -40,7 +33,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 
@@ -61,7 +53,6 @@ import com.example.njupter.ui.animation.AppNavigationTransition
 import com.example.njupter.ui.animation.AppPageTransition
 import com.example.njupter.ui.animation.PredictiveBackSurface
 import com.example.njupter.ui.animation.PredictiveBackOwner
-import com.example.njupter.ui.component.AppBottomBar
 import com.example.njupter.data.defaultSessionTimes
 import com.example.njupter.notification.CourseReminderScheduler
 import com.example.njupter.notification.ReminderBootstrapper
@@ -70,8 +61,6 @@ import com.example.njupter.widget.WidgetUpdateScheduler
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.Locale
-import dev.chrisbanes.haze.hazeSource
-import dev.chrisbanes.haze.rememberHazeState
 
 /**
  * 初始化依赖关系，连接ViewModel与UI，设置应用主题
@@ -152,10 +141,6 @@ class MainActivity : ComponentActivity() {
             val dynamicColorEnabled by settingsRepository.getDynamicColorEnabled().collectAsState(
                 initial = settingsRepository.peekDynamicColorEnabled()
             )
-            val floatingBottomBarEnabled by settingsRepository.getFloatingBottomBarEnabled()
-                .collectAsState(initial = settingsRepository.peekFloatingBottomBarEnabled())
-            val bottomBarBlurEnabled by settingsRepository.getBottomBarBlurEnabled()
-                .collectAsState(initial = settingsRepository.peekBottomBarBlurEnabled())
             val predictiveBackAnimation by settingsRepository.getPredictiveBackAnimation()
                 .collectAsState(initial = settingsRepository.peekPredictiveBackAnimation())
             val predictiveBackExitDirection by settingsRepository.getPredictiveBackExitDirection()
@@ -171,18 +156,6 @@ class MainActivity : ComponentActivity() {
                 val enableCurrentTimeIndicator by settingsRepository.getEnableCurrentTimeIndicator().collectAsState(initial = true)
                 val scope = rememberCoroutineScope()
                 val baseContext = LocalContext.current
-                val layoutDirection = LocalLayoutDirection.current
-                val bottomBarHazeState = rememberHazeState()
-                val bottomBarOverlaysContent =
-                    floatingBottomBarEnabled || bottomBarBlurEnabled
-                val navigationBarInset = WindowInsets.navigationBars
-                    .asPaddingValues()
-                    .calculateBottomPadding()
-                val bottomOverlayPadding = if (bottomBarOverlaysContent) {
-                    (if (floatingBottomBarEnabled) 100.dp else 88.dp) + navigationBarInset
-                } else {
-                    0.dp
-                }
                 var currentTab by remember { mutableStateOf(0) }
                 var showJwxtImport by remember { mutableStateOf(false) }
                 var settingsSubPage by remember { mutableStateOf("main") }
@@ -267,10 +240,10 @@ class MainActivity : ComponentActivity() {
                 }
 
                     PredictiveBackSurface(
-                        enabled = showJwxtImport || settingsSubPage != "main",
+                        enabled = showJwxtImport || settingsSubPage != "main" || currentTab == 1,
                         owner = when {
                             showJwxtImport -> PredictiveBackOwner.IMPORT_PAGE
-                            settingsSubPage != "main" -> PredictiveBackOwner.SETTINGS_PAGE
+                            settingsSubPage != "main" || currentTab == 1 -> PredictiveBackOwner.SETTINGS_PAGE
                             else -> null
                         },
                         animation = predictiveBackAnimation,
@@ -279,6 +252,10 @@ class MainActivity : ComponentActivity() {
                             when {
                                 showJwxtImport -> showJwxtImport = false
                                 settingsSubPage != "main" -> settingsSubPage = "main"
+                                currentTab == 1 -> {
+                                    currentTab = 0
+                                    settingsSubPage = "main"
+                                }
                             }
                         },
                         modifier = Modifier.fillMaxSize()
@@ -296,47 +273,13 @@ class MainActivity : ComponentActivity() {
                             )
                             },
                             mainContent = {
-                            Scaffold(
-                                bottomBar = {
-                                    if (!bottomBarOverlaysContent) {
-                                        AppBottomBar(
-                                            currentTab = currentTab,
-                                            settingsMainSelected = settingsSubPage == "main",
-                                            floating = false,
-                                            blurEnabled = false,
-                                            hazeState = bottomBarHazeState,
-                                            onTimetableClick = {
-                                                currentTab = 0
-                                                settingsSubPage = "main"
-                                            },
-                                            onSettingsClick = { currentTab = 1 }
-                                        )
-                                    }
-                                }
-                            ) { innerPadding ->
-                                val scenePadding = PaddingValues(
-                                    start = innerPadding.calculateStartPadding(layoutDirection),
-                                    top = innerPadding.calculateTopPadding(),
-                                    end = innerPadding.calculateEndPadding(layoutDirection),
-                                    bottom = if (bottomBarOverlaysContent) {
-                                        0.dp
-                                    } else {
-                                        innerPadding.calculateBottomPadding()
-                                    }
-                                )
+                            Scaffold { innerPadding ->
                                 Box(modifier = Modifier.fillMaxSize()) {
                                     Box(
                                         modifier = Modifier
                                             .fillMaxSize()
-                                            .padding(scenePadding)
+                                            .padding(innerPadding)
                                             .consumeWindowInsets(innerPadding)
-                                            .then(
-                                                if (bottomBarBlurEnabled) {
-                                                    Modifier.hazeSource(bottomBarHazeState)
-                                                } else {
-                                                    Modifier
-                                                }
-                                            )
                                     ) {
                                     AppNavigationTransition(
                                         currentTab = currentTab,
@@ -358,7 +301,6 @@ class MainActivity : ComponentActivity() {
                                                     showWeekends = uiState.showWeekends,
                                                     showNonCurrentWeekCourses = uiState.showNonCurrentWeekCourses,
                                                     enableCurrentTimeIndicator = enableCurrentTimeIndicator,
-                                                    bottomOverlayPadding = bottomOverlayPadding,
                                                     isLoading = uiState.isLoading,
                                                     onAddCourse = viewModel::addCourse,
                                                     onAddSession = viewModel::addSession,
@@ -369,6 +311,10 @@ class MainActivity : ComponentActivity() {
                                                     onDeleteTimetable = viewModel::deleteTimetable,
                                                     canUndo = uiState.canUndo,
                                                     onUndo = viewModel::undoLastChange,
+                                                    onSettingsClick = {
+                                                        currentTab = 1
+                                                        settingsSubPage = "main"
+                                                    },
                                                     onCurrentWeekChange = viewModel::setCurrentWeek,
                                                     onCreateTimetable = viewModel::createTimetable,
                                                     onImportClick = { showJwxtImport = true }
@@ -378,8 +324,6 @@ class MainActivity : ComponentActivity() {
                                                 ThemeSettingsScreen(
                                                     themeMode = appThemeMode,
                                                     dynamicColorEnabled = dynamicColorEnabled,
-                                                    floatingBottomBarEnabled = floatingBottomBarEnabled,
-                                                    bottomBarBlurEnabled = bottomBarBlurEnabled,
                                                     predictiveBackAnimation = predictiveBackAnimation,
                                                     predictiveBackExitDirection = predictiveBackExitDirection,
                                                     onThemeModeChange = { mode ->
@@ -392,16 +336,6 @@ class MainActivity : ComponentActivity() {
                                                             settingsRepository.setDynamicColorEnabled(enabled)
                                                         }
                                                     },
-                                                    onFloatingBottomBarChange = { enabled ->
-                                                        scope.launch {
-                                                            settingsRepository.setFloatingBottomBarEnabled(enabled)
-                                                        }
-                                                    },
-                                                    onBottomBarBlurChange = { enabled ->
-                                                        scope.launch {
-                                                            settingsRepository.setBottomBarBlurEnabled(enabled)
-                                                        }
-                                                    },
                                                     onPredictiveBackAnimationChange = { animation ->
                                                         scope.launch {
                                                             settingsRepository.setPredictiveBackAnimation(animation)
@@ -412,8 +346,7 @@ class MainActivity : ComponentActivity() {
                                                             settingsRepository.setPredictiveBackExitDirection(direction)
                                                         }
                                                     },
-                                                    onBack = { settingsSubPage = "main" },
-                                                    bottomContentPadding = bottomOverlayPadding
+                                                    onBack = { settingsSubPage = "main" }
                                                 )
                                             }
                                             subPage == "language" -> {
@@ -426,8 +359,7 @@ class MainActivity : ComponentActivity() {
                                                             // lambda 的写法是： { 参数列表 -> 函数体 }
                                                             // -> 左边把参数接住，右边是lambda被调用时要执行的代码
                                                         }
-                                                    },
-                                                    bottomContentPadding = bottomOverlayPadding
+                                                    }
                                                 )
                                             }
                                             subPage == "timetable" -> {
@@ -451,14 +383,12 @@ class MainActivity : ComponentActivity() {
                                                                 sessionTimes
                                                             )
                                                         }
-                                                    },
-                                                    bottomContentPadding = bottomOverlayPadding
+                                                    }
                                                 )
                                             }
                                             subPage == "widget" -> {
                                                 WidgetSettingsScreen(
-                                                    onBack = { settingsSubPage = "main" },
-                                                    bottomContentPadding = bottomOverlayPadding
+                                                    onBack = { settingsSubPage = "main" }
                                                 )
                                             }
                                             else -> {
@@ -477,27 +407,11 @@ class MainActivity : ComponentActivity() {
                                                             settingsRepository.setEnableCurrentTimeIndicator(enabled)
                                                         }
                                                     },
-                                                    bottomContentPadding = bottomOverlayPadding
+                                                    onBack = { currentTab = 0 }
                                                 )
                                             }
                                         }
                                     }
-                                }
-
-                                if (bottomBarOverlaysContent) {
-                                    AppBottomBar(
-                                        currentTab = currentTab,
-                                        settingsMainSelected = settingsSubPage == "main",
-                                        floating = floatingBottomBarEnabled,
-                                        blurEnabled = bottomBarBlurEnabled,
-                                        hazeState = bottomBarHazeState,
-                                        onTimetableClick = {
-                                            currentTab = 0
-                                            settingsSubPage = "main"
-                                        },
-                                        onSettingsClick = { currentTab = 1 },
-                                        modifier = Modifier.align(Alignment.BottomCenter)
-                                    )
                                 }
                             }
                             }

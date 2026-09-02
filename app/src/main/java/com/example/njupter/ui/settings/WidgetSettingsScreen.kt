@@ -62,8 +62,7 @@ private const val WIDGET_BG_FILE = "widget_background.jpg"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WidgetSettingsScreen(
-    onBack: () -> Unit,
-    bottomContentPadding: Dp = 0.dp
+    onBack: () -> Unit
 ) {
     val context = LocalContext.current
     var backgroundPath by remember { mutableStateOf(WidgetSettingsManager.getBackgroundImagePath(context)) }
@@ -216,7 +215,7 @@ fun WidgetSettingsScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(Modifier.height(24.dp + bottomContentPadding))
+            Spacer(Modifier.height(24.dp))
         }
     }
 }

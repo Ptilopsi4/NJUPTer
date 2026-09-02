@@ -53,8 +53,7 @@ fun TimetableSettingsScreen(
     currentShowNonCurrentWeekCourses: Boolean,
     currentSessionTimes: List<String>,
     onBack: () -> Unit,
-    onSave: (String, Long, Int, Boolean, Boolean, List<String>) -> Unit,
-    bottomContentPadding: Dp = 0.dp
+    onSave: (String, Long, Int, Boolean, Boolean, List<String>) -> Unit
 ) {
     var name by remember(currentTimetableName) { mutableStateOf(currentTimetableName) }
     var startDate by remember(currentStartDate) { mutableStateOf(currentStartDate) }
@@ -129,7 +128,7 @@ fun TimetableSettingsScreen(
                 .fillMaxWidth()
                 .animateContentSize(animationSpec = tween(200))
                 .padding(horizontal = 16.dp),
-            contentPadding = PaddingValues(bottom = 24.dp + bottomContentPadding),
+            contentPadding = PaddingValues(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {

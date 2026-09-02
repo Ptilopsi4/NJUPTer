@@ -26,10 +26,6 @@ interface SettingsRepository {
     suspend fun setAppThemeMode(mode: AppThemeMode)
     fun getDynamicColorEnabled(): Flow<Boolean>
     suspend fun setDynamicColorEnabled(enabled: Boolean)
-    fun getFloatingBottomBarEnabled(): Flow<Boolean>
-    suspend fun setFloatingBottomBarEnabled(enabled: Boolean)
-    fun getBottomBarBlurEnabled(): Flow<Boolean>
-    suspend fun setBottomBarBlurEnabled(enabled: Boolean)
     fun getPredictiveBackAnimation(): Flow<PredictiveBackAnimation>
     suspend fun setPredictiveBackAnimation(animation: PredictiveBackAnimation)
     fun getPredictiveBackExitDirection(): Flow<PredictiveBackExitDirection>
@@ -49,14 +45,6 @@ interface SettingsRepository {
 
     fun peekDynamicColorEnabled(): Boolean {
         return (getDynamicColorEnabled() as? StateFlow)?.value ?: true
-    }
-
-    fun peekFloatingBottomBarEnabled(): Boolean {
-        return (getFloatingBottomBarEnabled() as? StateFlow)?.value ?: false
-    }
-
-    fun peekBottomBarBlurEnabled(): Boolean {
-        return (getBottomBarBlurEnabled() as? StateFlow)?.value ?: false
     }
 
     fun peekPredictiveBackAnimation(): PredictiveBackAnimation {
@@ -80,8 +68,6 @@ class SharedPreferencesSettingsRepository(context: Context) : SettingsRepository
         private const val KEY_CURRENT_TIME_INDICATOR = "enable_current_time_indicator"
         private const val KEY_APP_THEME_MODE = "app_theme_mode"
         private const val KEY_DYNAMIC_COLOR = "dynamic_color"
-        private const val KEY_FLOATING_BOTTOM_BAR = "floating_bottom_bar"
-        private const val KEY_BOTTOM_BAR_BLUR = "bottom_bar_blur"
         private const val KEY_PREDICTIVE_BACK_ANIMATION = "predictive_back_animation"
         private const val KEY_PREDICTIVE_BACK_EXIT_DIRECTION = "predictive_back_exit_direction"
     }
@@ -110,12 +96,6 @@ class SharedPreferencesSettingsRepository(context: Context) : SettingsRepository
         prefs.enumValue(KEY_APP_THEME_MODE, AppThemeMode.SYSTEM)
     )
     private val _dynamicColorEnabled = MutableStateFlow(prefs.getBoolean(KEY_DYNAMIC_COLOR, true))
-    private val _floatingBottomBarEnabled = MutableStateFlow(
-        prefs.getBoolean(KEY_FLOATING_BOTTOM_BAR, false)
-    )
-    private val _bottomBarBlurEnabled = MutableStateFlow(
-        prefs.getBoolean(KEY_BOTTOM_BAR_BLUR, false)
-    )
     private val _predictiveBackAnimation = MutableStateFlow(
         prefs.enumValue(KEY_PREDICTIVE_BACK_ANIMATION, PredictiveBackAnimation.SCALE)
     )
@@ -175,21 +155,6 @@ class SharedPreferencesSettingsRepository(context: Context) : SettingsRepository
     override suspend fun setDynamicColorEnabled(enabled: Boolean) {
         prefs.edit { putBoolean(KEY_DYNAMIC_COLOR, enabled) }
         _dynamicColorEnabled.value = enabled
-    }
-
-    override fun getFloatingBottomBarEnabled(): Flow<Boolean> =
-        _floatingBottomBarEnabled.asStateFlow()
-
-    override suspend fun setFloatingBottomBarEnabled(enabled: Boolean) {
-        prefs.edit { putBoolean(KEY_FLOATING_BOTTOM_BAR, enabled) }
-        _floatingBottomBarEnabled.value = enabled
-    }
-
-    override fun getBottomBarBlurEnabled(): Flow<Boolean> = _bottomBarBlurEnabled.asStateFlow()
-
-    override suspend fun setBottomBarBlurEnabled(enabled: Boolean) {
-        prefs.edit { putBoolean(KEY_BOTTOM_BAR_BLUR, enabled) }
-        _bottomBarBlurEnabled.value = enabled
     }
 
     override fun getPredictiveBackAnimation(): Flow<PredictiveBackAnimation> =

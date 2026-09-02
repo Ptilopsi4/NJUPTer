@@ -23,8 +23,7 @@ import com.example.njupter.ui.theme.NJUPTerTheme
 fun LanguageSelectScreen(
     currentLanguageTag: String,
     onBack: () -> Unit,
-    onSelectLanguage: (String) -> Unit,
-    bottomContentPadding: Dp = 0.dp
+    onSelectLanguage: (String) -> Unit
 ) {
     val normalizedLanguageTag = if (currentLanguageTag.startsWith("zh")) "zh" else "en"
     val isSystemSelected = currentLanguageTag.isEmpty() || currentLanguageTag == "system"
@@ -45,7 +44,7 @@ fun LanguageSelectScreen(
                 .weight(1f)
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
-            contentPadding = PaddingValues(bottom = 24.dp + bottomContentPadding),
+            contentPadding = PaddingValues(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {

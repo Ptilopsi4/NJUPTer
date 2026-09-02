@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
@@ -92,7 +93,6 @@ fun TimetableScreen(
     showWeekends: Boolean = true,
     showNonCurrentWeekCourses: Boolean = false,
     enableCurrentTimeIndicator: Boolean = true,
-    bottomOverlayPadding: Dp = 0.dp,
     isLoading: Boolean = false,
     onAddCourse: (CourseInfo) -> Unit = {},
     onAddSession: (CourseSession) -> Unit = {},
@@ -103,6 +103,7 @@ fun TimetableScreen(
     onDeleteTimetable: (String) -> Unit = {},
     canUndo: Boolean = false,
     onUndo: () -> Unit = {},
+    onSettingsClick: () -> Unit = {},
     onCurrentWeekChange: (Int) -> Unit = {},
     onCreateTimetable: (String, Long, Int, Boolean, List<String>) -> Unit = { _, _, _, _, _ -> },
     onImportClick: (() -> Unit)? = null
@@ -373,27 +374,10 @@ fun TimetableScreen(
                                 contentDescription = stringResource(R.string.cd_undo)
                             )
                         }
-                        IconButton(onClick = {
-                            scope.launch {
-                                val prev = (pagerState.currentPage - 1).coerceAtLeast(0)
-                                pagerState.animateScrollToPage(prev)
-                            }
-                        }) {
+                        IconButton(onClick = onSettingsClick) {
                             Icon(
-                                Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                                contentDescription = stringResource(R.string.cd_previous_week)
-                            )
-                        }
-                        IconButton(onClick = {
-                            scope.launch {
-                                val next =
-                                    (pagerState.currentPage + 1).coerceAtMost(currentTotalWeeks - 1)
-                                pagerState.animateScrollToPage(next)
-                            }
-                        }) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                contentDescription = stringResource(R.string.cd_next_week)
+                                Icons.Default.Settings,
+                                contentDescription = stringResource(R.string.cd_settings)
                             )
                         }
                     }
@@ -403,7 +387,6 @@ fun TimetableScreen(
         floatingActionButton = {
             Row(
                 modifier = Modifier
-                    .padding(bottom = bottomOverlayPadding)
                     .animateContentSize(animationSpec = tween(200)),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -768,9 +751,6 @@ fun TimetableScreen(
                     }
                 }
 
-                if (bottomOverlayPadding > 0.dp) {
-                    Spacer(Modifier.height(bottomOverlayPadding))
-                }
             }
         }
 

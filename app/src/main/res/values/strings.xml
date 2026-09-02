@@ -193,10 +193,6 @@
     <string name="dynamic_color">Dynamic color</string>
     <string name="dynamic_color_summary">Use colors from your wallpaper</string>
     <string name="dynamic_color_unavailable">Dynamic color requires Android 12 or newer</string>
-    <string name="floating_bottom_bar">Floating bottom bar</string>
-    <string name="floating_bottom_bar_summary">Show the bottom bar as a raised, rounded surface</string>
-    <string name="bottom_bar_blur">Bottom bar blur</string>
-    <string name="bottom_bar_blur_summary">Blur only the content behind the bottom bar</string>
     <string name="predictive_back_animation">Predictive back animation</string>
     <string name="predictive_back_animation_summary">Preview the destination while swiping back</string>
     <string name="predictive_back_animation_none">None</string>

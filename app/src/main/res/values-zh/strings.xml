@@ -192,10 +192,6 @@
     <string name="dynamic_color">动态取色</string>
     <string name="dynamic_color_summary">使用壁纸颜色生成应用配色</string>
     <string name="dynamic_color_unavailable">动态取色需要 Android 12 或更高版本</string>
-    <string name="floating_bottom_bar">悬浮底栏</string>
-    <string name="floating_bottom_bar_summary">将底栏显示为带圆角和阴影的悬浮表面</string>
-    <string name="bottom_bar_blur">底栏模糊</string>
-    <string name="bottom_bar_blur_summary">仅模糊底栏后方的页面内容</string>
     <string name="predictive_back_animation">预测性返回动画</string>
     <string name="predictive_back_animation_summary">返回手势过程中预览目标页面</string>
     <string name="predictive_back_animation_none">无</string>
