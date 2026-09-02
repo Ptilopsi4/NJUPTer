@@ -18,6 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
@@ -100,6 +101,8 @@ fun TimetableScreen(
     onDeleteSession: (CourseSession) -> Unit = {},
     onSwitchTimetable: (String) -> Unit = {},
     onDeleteTimetable: (String) -> Unit = {},
+    canUndo: Boolean = false,
+    onUndo: () -> Unit = {},
     onCurrentWeekChange: (Int) -> Unit = {},
     onCreateTimetable: (String, Long, Int, Boolean, List<String>) -> Unit = { _, _, _, _, _ -> },
     onImportClick: (() -> Unit)? = null
@@ -166,6 +169,8 @@ fun TimetableScreen(
     var showTimetableSheet by remember { mutableStateOf(false) }
     var showNewTimetableDialog by remember { mutableStateOf(false) }
     var timetableToDelete by remember { mutableStateOf<TimetableMetadata?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val undoDoneMessage = stringResource(R.string.undo_done)
 
     if (showNewTimetableDialog) {
         TimetableConfigDialog(
@@ -308,6 +313,7 @@ fun TimetableScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -353,6 +359,20 @@ fun TimetableScreen(
                     }
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = {
+                                onUndo()
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(undoDoneMessage)
+                                }
+                            },
+                            enabled = canUndo
+                        ) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.Undo,
+                                contentDescription = stringResource(R.string.cd_undo)
+                            )
+                        }
                         IconButton(onClick = {
                             scope.launch {
                                 val prev = (pagerState.currentPage - 1).coerceAtLeast(0)

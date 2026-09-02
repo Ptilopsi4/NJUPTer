@@ -82,6 +82,8 @@
     <string name="cd_previous_week">上一周</string>
     <string name="cd_next_week">下一周</string>
     <string name="cd_add_course">添加课程</string>
+    <string name="cd_undo">撤销</string>
+    <string name="undo_done">已撤销最近修改</string>
     <string name="cd_selected">已选择</string>
 
     <!-- Settings Screen -->

@@ -40,6 +40,7 @@ data class TimetableUiState(
     val showWeekends: Boolean = false,
     val showNonCurrentWeekCourses: Boolean = false,
     val currentSessionTimes: List<String> = emptyList(),
+    val canUndo: Boolean = false,
     
     // Import state
     val importResult: TimetableImportMatcher.ImportResult? = null,
@@ -93,8 +94,9 @@ class TimetableViewModel(
         combine(
             repository.getIsInitialized(),
             _currentWeek
-        ) { initialized, currentWeek -> initialized to currentWeek }
-    ) { courseData, currentData, stateData ->
+        ) { initialized, currentWeek -> initialized to currentWeek },
+        repository.getUndoAvailable()
+    ) { courseData, currentData, stateData, canUndo ->
         TimetableBundle(
             courses = courseData.first,
             sessions = courseData.second,
@@ -103,7 +105,8 @@ class TimetableViewModel(
             currentId = currentData.second,
             currentMeta = currentData.third,
             initialized = stateData.first,
-            currentWeek = stateData.second
+            currentWeek = stateData.second,
+            canUndo = canUndo
         )
     }
 
@@ -129,7 +132,8 @@ class TimetableViewModel(
             currentWeek = bundle.currentWeek.coerceIn(1, safeTotalWeeks),
             showWeekends = safeShowWeekends,
             showNonCurrentWeekCourses = safeShowNonCurrentWeekCourses,
-            currentSessionTimes = safeSessionTimes
+            currentSessionTimes = safeSessionTimes,
+            canUndo = bundle.canUndo
         )
     }.distinctUntilChanged().stateIn(
         scope = viewModelScope,
@@ -155,7 +159,8 @@ class TimetableViewModel(
         val currentId: String?,
         val currentMeta: TimetableMetadata?,
         val initialized: Boolean,
-        val currentWeek: Int
+        val currentWeek: Int,
+        val canUndo: Boolean
     )
 
     fun processTimetableImport(html: String) {
@@ -256,6 +261,13 @@ class TimetableViewModel(
     fun deleteSession(session: CourseSession) {
         viewModelScope.launch {
             repository.deleteSession(session)
+            appContext?.let { onWidgetRefresh(it) }
+        }
+    }
+
+    fun undoLastChange() {
+        viewModelScope.launch {
+            repository.undoLastChange()
             appContext?.let { onWidgetRefresh(it) }
         }
     }
