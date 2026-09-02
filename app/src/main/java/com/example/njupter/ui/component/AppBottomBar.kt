@@ -15,7 +15,6 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -94,8 +93,7 @@ fun AppBottomBar(
                         Icons.Default.Home,
                         contentDescription = stringResource(R.string.cd_timetable)
                     )
-                },
-                label = { Text(stringResource(R.string.timetable)) }
+                }
             )
             NavigationBarItem(
                 selected = currentTab == 1 && settingsMainSelected,
@@ -105,8 +103,7 @@ fun AppBottomBar(
                         Icons.Default.Settings,
                         contentDescription = stringResource(R.string.cd_settings)
                     )
-                },
-                label = { Text(stringResource(R.string.settings)) }
+                }
             )
         }
     }
