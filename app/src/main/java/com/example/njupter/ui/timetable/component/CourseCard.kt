@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import com.example.njupter.ui.animation.pressScale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -70,8 +72,9 @@ fun CourseCard(
     ) {
         Column(
             modifier = Modifier
-                .padding(4.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+                .padding(4.dp)
+                .fillMaxHeight(),
+            verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically)
         ) {
             Text(
                 text = course.name,
@@ -90,8 +93,9 @@ fun CourseCard(
                     text = "@${course.classroom}",
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                     color = contentColor,
-                    // 教室信息不折叠：允许换行完整显示，避免被省略号截断
-                    maxLines = 2
+                    // 教室信息不折叠：允许换行完整显示，避免被省略号截断；居中显示
+                    maxLines = 2,
+                    textAlign = TextAlign.Center
                 )
             }
         }
