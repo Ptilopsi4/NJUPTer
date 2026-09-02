@@ -7,5 +7,6 @@ data class CourseInfo(
     val classroom: String,
     val colorIndex: Int = -1,    // “-1” 默认Auto
     val credit: String = "",
-    val courseNature: String = ""
+    val courseNature: String = "",
+    val note: String = ""
 )

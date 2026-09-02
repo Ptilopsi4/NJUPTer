@@ -27,6 +27,7 @@
     <string name="edit_course">Edit Course</string>
     <string name="course_details">Course Details</string>
     <string name="course_name">Course Name</string>
+    <string name="note">Note</string>
     <string name="teacher">Teacher</string>
     <string name="classroom">Classroom</string>
     <string name="time_settings">Time Settings</string>
@@ -69,6 +70,9 @@
     <string name="create">Create</string>
     <string name="select_timetable">Select Timetable</string>
     <string name="last_modified">Last modified</string>
+    <string name="delete_timetable_title">Delete \"%1$s\"?</string>
+    <string name="delete_timetable_message">This timetable and all its courses will be permanently deleted. This action cannot be undone.</string>
+    <string name="cd_delete_timetable">Delete Timetable</string>
 
     <!-- Week Selection Dialog -->
     <string name="jump_to_week">Jump to Week</string>

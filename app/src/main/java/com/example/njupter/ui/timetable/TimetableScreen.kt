@@ -20,6 +20,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.*
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -98,6 +99,7 @@ fun TimetableScreen(
     onUpdateSession: (CourseSession, CourseSession) -> Unit = { _, _ -> },
     onDeleteSession: (CourseSession) -> Unit = {},
     onSwitchTimetable: (String) -> Unit = {},
+    onDeleteTimetable: (String) -> Unit = {},
     onCurrentWeekChange: (Int) -> Unit = {},
     onCreateTimetable: (String, Long, Int, Boolean, List<String>) -> Unit = { _, _, _, _, _ -> },
     onImportClick: (() -> Unit)? = null
@@ -163,6 +165,7 @@ fun TimetableScreen(
 
     var showTimetableSheet by remember { mutableStateOf(false) }
     var showNewTimetableDialog by remember { mutableStateOf(false) }
+    var timetableToDelete by remember { mutableStateOf<TimetableMetadata?>(null) }
 
     if (showNewTimetableDialog) {
         TimetableConfigDialog(
@@ -205,8 +208,17 @@ fun TimetableScreen(
                                 Text(stringResource(R.string.last_modified, format.format(date)))
                             },
                             trailingContent = {
-                                if (isCurrent) {
-                                    Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_selected))
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    if (isCurrent) {
+                                        Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_selected))
+                                    }
+                                    IconButton(onClick = { timetableToDelete = meta }) {
+                                        Icon(
+                                            Icons.Default.Delete,
+                                            contentDescription = stringResource(R.string.cd_delete_timetable),
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                    }
                                 }
                             },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -235,6 +247,32 @@ fun TimetableScreen(
                 }
             }
         }
+    }
+
+    // 删除课表确认弹窗
+    timetableToDelete?.let { meta ->
+        AlertDialog(
+            onDismissRequest = { timetableToDelete = null },
+            title = { Text(stringResource(R.string.delete_timetable_title, meta.name)) },
+            text = { Text(stringResource(R.string.delete_timetable_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDeleteTimetable(meta.id)
+                        // 删除当前课表时直接关闭选择面板，避免残留引用
+                        if (meta.id == currentTimetableId) showTimetableSheet = false
+                        timetableToDelete = null
+                    }
+                ) {
+                    Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { timetableToDelete = null }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
     }
 
     courseDetailsSelection?.let { selection ->

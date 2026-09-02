@@ -108,7 +108,8 @@ class LocalFileDataSource(private val context: Context) : TimetableDataSource {
                         classroom = it.room,
                         colorIndex = it.colorIndex,
                         credit = it.credit.orEmpty(),
-                        courseNature = it.courseNature.orEmpty()
+                        courseNature = it.courseNature.orEmpty(),
+                        note = it.note.orEmpty()
                     )
                 }
                 val domainSessions = root.sessions.map {
@@ -139,7 +140,8 @@ class LocalFileDataSource(private val context: Context) : TimetableDataSource {
                     room = it.classroom,
                     colorIndex = it.colorIndex,
                     credit = it.credit,
-                    courseNature = it.courseNature
+                    courseNature = it.courseNature,
+                    note = it.note
                 )
             },
             sessions = data.sessions.map {

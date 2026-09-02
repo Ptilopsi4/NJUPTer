@@ -202,6 +202,13 @@ class TimetableViewModel(
         }
     }
 
+    fun deleteTimetable(id: String) {
+        viewModelScope.launch {
+            repository.deleteTimetable(id)
+            appContext?.let { onWidgetRefresh(it) }
+        }
+    }
+
     fun setCurrentWeek(week: Int) {
         viewModelScope.launch {
             val currentTimetableId = repository.getCurrentTimetableId().value ?: return@launch

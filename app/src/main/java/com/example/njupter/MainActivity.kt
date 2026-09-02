@@ -366,6 +366,7 @@ class MainActivity : ComponentActivity() {
                                                     onUpdateSession = viewModel::updateSession,
                                                     onDeleteSession = viewModel::deleteSession,
                                                     onSwitchTimetable = viewModel::switchTimetable,
+                                                    onDeleteTimetable = viewModel::deleteTimetable,
                                                     onCurrentWeekChange = viewModel::setCurrentWeek,
                                                     onCreateTimetable = viewModel::createTimetable,
                                                     onImportClick = { showJwxtImport = true }

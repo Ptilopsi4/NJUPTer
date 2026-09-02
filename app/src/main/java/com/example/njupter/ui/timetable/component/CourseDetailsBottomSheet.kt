@@ -102,6 +102,12 @@ fun CourseDetailsBottomSheet(
                 label = stringResource(R.string.course_nature),
                 value = course.courseNature.ifBlank { stringResource(R.string.not_set) }
             )
+            if (course.note.isNotBlank()) {
+                CourseDetailRow(
+                    label = stringResource(R.string.note),
+                    value = course.note
+                )
+            }
             CourseDetailRow(
                 label = stringResource(R.string.day_of_week),
                 value = dayNames.getOrElse(session.day - 1) { session.day.toString() }

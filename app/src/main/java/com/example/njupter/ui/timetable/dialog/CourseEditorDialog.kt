@@ -80,6 +80,7 @@ fun CourseEditorDialog(
     var courseName by remember { mutableStateOf(initialCourse?.name ?: "") }
     var teacher by remember { mutableStateOf(initialCourse?.teacher ?: "") }
     var classroom by remember { mutableStateOf(initialCourse?.classroom ?: "") }
+    var note by remember { mutableStateOf(initialCourse?.note ?: "") }
     var selectedColorIndex by remember { mutableStateOf(initialCourse?.colorIndex ?: -1) }
 
     // Session
@@ -200,6 +201,15 @@ fun CourseEditorDialog(
                         modifier = Modifier.weight(1f)
                     )
                 }
+
+                OutlinedTextField(
+                    value = note,
+                    onValueChange = { note = it },
+                    label = { Text(stringResource(R.string.note)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 2,
+                    maxLines = 4
+                )
 
                 HorizontalDivider(Modifier.padding(10.dp, vertical = 10.dp))
 
@@ -469,7 +479,8 @@ fun CourseEditorDialog(
                     classroom = classroom,
                     colorIndex = selectedColorIndex,
                     credit = initialCourse?.credit.orEmpty(),
-                    courseNature = initialCourse?.courseNature.orEmpty()
+                    courseNature = initialCourse?.courseNature.orEmpty(),
+                    note = note.trim()
                 )
                 // Re-create session with final values
                 val finalSession = CourseSession(

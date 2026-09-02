@@ -15,8 +15,8 @@ val defaultSessionTimes = listOf(
     "15:35-16:20",
     "16:25-17:10",
     "18:30-19:15",
-    "19:20-20:05",
-    "20:10-20:55"
+    "19:25-20:10",
+    "20:20-21:05"
 )
 
 data class TimetableMetadata(
@@ -57,7 +57,8 @@ internal data class CourseInfoJson(
     val room: String,
     val colorIndex: Int = -1,
     val credit: String? = null,
-    val courseNature: String? = null
+    val courseNature: String? = null,
+    val note: String? = null
 )
 
 internal data class CourseSessionJson(

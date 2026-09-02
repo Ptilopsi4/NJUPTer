@@ -124,11 +124,18 @@ class FileTimetableRepository(
     }
 
     override suspend fun deleteTimetable(id: String) {
+        // 删除当前课表时切换到另一张；若没有其他课表则清空当前状态进入空态
+        val others = _availableTimetables.value.filterNot { it.id == id }
         if (id == _currentTimetableId.value) {
-             val first = _availableTimetables.value.firstOrNull()
-             if (first != null) {
-                 switchTimetable(first.id)
-             }
+            val next = others.firstOrNull()
+            if (next != null) {
+                switchTimetable(next.id)
+            } else {
+                _currentTimetableId.value = null
+                _currentTimetableName.value = ""
+                _courseInfos.value = emptyList()
+                _courseSessions.value = emptyList()
+            }
         }
         dataSource.deleteTimetable(id)
         refreshTimetableList()
