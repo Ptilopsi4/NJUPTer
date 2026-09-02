@@ -79,7 +79,7 @@ fun CourseCard(
                     fontWeight = FontWeight.Bold
                 ),
                 color = contentColor,
-                maxLines = 2,
+                maxLines = 3,
                 overflow = TextOverflow.Ellipsis
             )
 
@@ -90,16 +90,6 @@ fun CourseCard(
                     color = contentColor,
                     // 教室信息不折叠：允许换行完整显示，避免被省略号截断
                     maxLines = 2
-                )
-            }
-
-            if (course.teacher.isNotEmpty()) {
-                Text(
-                    text = "${course.teacher}",
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                    color = contentColor,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
