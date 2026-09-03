@@ -97,6 +97,7 @@ fun SettingsScreen(
                 icon = SettingsIcon.Vector(Icons.Default.CalendarMonth),
                 title = stringResource(R.string.cur_timetable_settings),
                 value = currentTimetableName,
+                emphasized = true,
                 onClick = onTimetableSettingsClick
             )
         )

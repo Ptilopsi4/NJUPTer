@@ -35,6 +35,7 @@ sealed interface SettingsItem {
         override val title: String,
         override val description: String? = null,
         val value: String? = null,
+        val emphasized: Boolean = false,
         val onClick: () -> Unit
     ) : SettingsItem
 }

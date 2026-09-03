@@ -75,6 +75,7 @@ private fun SettingsSegment(
     topRadius: Int,
     bottomRadius: Int
 ) {
+    val emphasized = (item as? SettingsItem.Navigation)?.emphasized == true
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     val shapeSpec = spring<androidx.compose.ui.unit.Dp>(
@@ -119,7 +120,11 @@ private fun SettingsSegment(
                 scaleY = scale
             },
         shape = shape,
-        color = MaterialTheme.colorScheme.surfaceContainer
+        color = if (emphasized) {
+            MaterialTheme.colorScheme.secondaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceContainer
+        }
     ) {
         Row(
             modifier = Modifier
@@ -131,7 +136,7 @@ private fun SettingsSegment(
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            SettingsItemIcon(item.icon)
+            SettingsItemIcon(item.icon, emphasized)
             Spacer(Modifier.width(16.dp))
 
             Column(
@@ -141,7 +146,11 @@ private fun SettingsSegment(
                 Text(
                     text = item.title,
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = if (emphasized) {
+                        MaterialTheme.colorScheme.onSecondaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    }
                 )
                 item.description?.takeIf { it.isNotBlank() }?.let { description ->
                     Text(
@@ -191,18 +200,23 @@ private fun SettingsSegment(
 }
 
 @Composable
-private fun SettingsItemIcon(icon: SettingsIcon) {
+private fun SettingsItemIcon(icon: SettingsIcon, emphasized: Boolean) {
+    val tint = if (emphasized) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
     when (icon) {
         is SettingsIcon.Vector -> Icon(
             imageVector = icon.imageVector,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = tint,
             modifier = Modifier.size(24.dp)
         )
         is SettingsIcon.Drawable -> Icon(
             painter = painterResource(id = icon.resId),
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = tint,
             modifier = Modifier.size(24.dp)
         )
     }
