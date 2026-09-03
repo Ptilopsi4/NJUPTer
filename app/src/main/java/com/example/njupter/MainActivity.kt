@@ -145,6 +145,9 @@ class MainActivity : ComponentActivity() {
                 .collectAsState(initial = settingsRepository.peekPredictiveBackAnimation())
             val predictiveBackExitDirection by settingsRepository.getPredictiveBackExitDirection()
                 .collectAsState(initial = settingsRepository.peekPredictiveBackExitDirection())
+            val courseColorTone by settingsRepository.getCourseColorTone().collectAsState(
+                initial = settingsRepository.peekCourseColorTone()
+            )
 
             NJUPTerTheme(
                 themeMode = appThemeMode,
@@ -302,6 +305,7 @@ class MainActivity : ComponentActivity() {
                                                     showNonCurrentWeekCourses = uiState.showNonCurrentWeekCourses,
                                                     enableCurrentTimeIndicator = enableCurrentTimeIndicator,
                                                     isLoading = uiState.isLoading,
+                                                    courseColorTone = courseColorTone,
                                                     onAddCourse = viewModel::addCourse,
                                                     onAddSession = viewModel::addSession,
                                                     onUpdateCourse = viewModel::updateCourse,
@@ -324,6 +328,7 @@ class MainActivity : ComponentActivity() {
                                                 ThemeSettingsScreen(
                                                     themeMode = appThemeMode,
                                                     dynamicColorEnabled = dynamicColorEnabled,
+                                                    courseColorTone = courseColorTone,
                                                     predictiveBackAnimation = predictiveBackAnimation,
                                                     predictiveBackExitDirection = predictiveBackExitDirection,
                                                     onThemeModeChange = { mode ->
@@ -334,6 +339,11 @@ class MainActivity : ComponentActivity() {
                                                     onDynamicColorChange = { enabled ->
                                                         scope.launch {
                                                             settingsRepository.setDynamicColorEnabled(enabled)
+                                                        }
+                                                    },
+                                                    onCourseColorToneChange = { tone ->
+                                                        scope.launch {
+                                                            settingsRepository.setCourseColorTone(tone)
                                                         }
                                                     },
                                                     onPredictiveBackAnimationChange = { animation ->

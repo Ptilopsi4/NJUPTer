@@ -43,6 +43,7 @@ import com.example.njupter.data.CourseInfo
 import com.example.njupter.data.CourseSession
 import com.example.njupter.data.TimetableMetadata
 import com.example.njupter.data.defaultSessionTimes
+import com.example.njupter.ui.theme.CourseColorTone
 import com.example.njupter.ui.theme.getCourseColors
 import com.example.njupter.ui.theme.isAppInDarkTheme
 import com.example.njupter.ui.theme.NJUPTerTheme
@@ -93,6 +94,7 @@ fun TimetableScreen(
     showWeekends: Boolean = true,
     showNonCurrentWeekCourses: Boolean = false,
     enableCurrentTimeIndicator: Boolean = true,
+    courseColorTone: CourseColorTone = CourseColorTone.STANDARD,
     isLoading: Boolean = false,
     onAddCourse: (CourseInfo) -> Unit = {},
     onAddSession: (CourseSession) -> Unit = {},
@@ -112,9 +114,30 @@ fun TimetableScreen(
     val sidebarWidth = 50.dp
     val scope = rememberCoroutineScope()
 
-    val currentCourseColors = getCourseColors()
+    val currentCourseColors = getCourseColors(courseColorTone)
     val isDark = isAppInDarkTheme()
     val courseMap = remember(courseInfos) { courseInfos.associateBy { it.id } }
+
+    // Auto 色分配：避免手动色后，按课程名哈希为种子做线性探测，
+    // 保证 Auto 课程之间（及与手动色）尽量不撞色
+    val autoColorIndices = remember(courseInfos, currentCourseColors.size) {
+        val used = mutableSetOf<Int>()
+        courseInfos.forEach { info ->
+            if (info.colorIndex in used.indices) used.add(info.colorIndex)
+        }
+        val map = mutableMapOf<String, Int>()
+        courseInfos.filter { it.colorIndex == -1 }.forEach { info ->
+            var idx = (info.name.hashCode() and Int.MAX_VALUE) % currentCourseColors.size
+            var probe = 0
+            while (idx in used && probe < currentCourseColors.size) {
+                idx = (idx + 1) % currentCourseColors.size
+                probe++
+            }
+            used.add(idx)
+            map[info.id] = idx
+        }
+        map
+    }
 
     val gridBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
     val gridHeaderBg = MaterialTheme.colorScheme.surface
@@ -711,6 +734,7 @@ fun TimetableScreen(
                                     sessions = sessionsByDay[day].orEmpty(),
                                     maxSection = maxSection,
                                     colorsList = currentCourseColors,
+                                    autoColorIndices = autoColorIndices,
                                     onCourseClick = { session, course ->
                                         courseDetailsSelection = CourseDetailsSelection(
                                             session = session,
@@ -763,6 +787,7 @@ fun TimetableScreen(
                 colorsList = currentCourseColors,
                 isDarkTheme = isDark,
                 totalWeeks = currentTotalWeeks,
+                maxSection = sessionTimes.size.coerceAtLeast(2),
                 initialDay = newCoursePlacement?.day ?: 1,
                 initialStartSection = newCoursePlacement?.section ?: 1,
                 initialEndSection = newCoursePlacement?.section ?: 2,
@@ -803,6 +828,7 @@ private fun CourseDayColumn(
     sessions: List<CourseDisplayItem>,
     maxSection: Int,
     colorsList: List<Color>,
+    autoColorIndices: Map<String, Int>,
     onCourseClick: (CourseSession, CourseInfo) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -814,6 +840,7 @@ private fun CourseDayColumn(
                     course = item.course,
                     colorsList = colorsList,
                     isActiveInCurrentWeek = item.isActiveInCurrentWeek,
+                    autoColorIndex = autoColorIndices[item.course.id],
                     onClick = { onCourseClick(item.session, item.course) }
                 )
             }

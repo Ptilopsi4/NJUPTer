@@ -31,12 +31,15 @@ fun CourseCard(
     course: CourseInfo,
     colorsList: List<Color>,
     isActiveInCurrentWeek: Boolean = true,
+    autoColorIndex: Int? = null,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val colorIndex = remember(course, colorsList) {
+    val colorIndex = remember(course, colorsList, autoColorIndex) {
         if (course.colorIndex in colorsList.indices) {
             course.colorIndex
+        } else if (autoColorIndex != null && autoColorIndex in colorsList.indices) {
+            autoColorIndex
         } else {
             if (colorsList.isNotEmpty()) (course.name.hashCode() and Int.MAX_VALUE) % colorsList.size else 0
         }
