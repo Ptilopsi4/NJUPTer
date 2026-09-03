@@ -60,7 +60,6 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.7.5")
     implementation("com.google.code.gson:gson:2.10.1")
     implementation(libs.androidx.compose.foundation)
-    implementation(libs.haze)
 
     // Glance 小组件
     implementation(libs.glance.appwidget)
