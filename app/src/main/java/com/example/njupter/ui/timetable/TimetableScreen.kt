@@ -37,7 +37,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.invisibleToUser
+import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -445,16 +445,18 @@ fun TimetableScreen(
                             if (showTodayFab) {
                                 Modifier
                             } else {
-                                Modifier.semantics { invisibleToUser() }
+                                Modifier.semantics { hideFromAccessibility() }
                             }
                         )
                 ) {
                     FloatingActionButton(
                         onClick = {
                             // 隐形的只是槽位：不在本周时点击不做任何事
-                            if (showTodayFab && todayTargetWeek != null) {
-                                scope.launch {
-                                    pagerState.animateScrollToPage(todayTargetWeek)
+                            if (showTodayFab) {
+                                todayTargetWeek?.let { week ->
+                                    scope.launch {
+                                        pagerState.animateScrollToPage(week)
+                                    }
                                 }
                             }
                         },
