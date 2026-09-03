@@ -66,17 +66,12 @@ private val LocalAppDarkTheme = staticCompositionLocalOf { false }
 @Composable
 fun isAppInDarkTheme(): Boolean = LocalAppDarkTheme.current
 
-private val LightCourseColors = listOf(
-    CourseLight1, CourseLight2, CourseLight3, CourseLight4, CourseLight5,
-    CourseLight6, CourseLight7, CourseLight8
-)
-
-private val DarkCourseColors = listOf(
-    CourseDark1, CourseDark2, CourseDark3, CourseDark4, CourseDark5,
-    CourseDark6, CourseDark7, CourseDark8
-)
-
 @Composable
-fun getCourseColors(): List<Color> {
-    return if (LocalAppDarkTheme.current) DarkCourseColors else LightCourseColors
+fun getCourseColors(tone: CourseColorTone = CourseColorTone.STANDARD): List<Color> {
+    if (LocalAppDarkTheme.current) return DarkCourseColors
+    return when (tone) {
+        CourseColorTone.SOFT -> SoftCourseColors
+        CourseColorTone.STANDARD -> StandardCourseColors
+        CourseColorTone.VIVID -> VividCourseColors
+    }
 }

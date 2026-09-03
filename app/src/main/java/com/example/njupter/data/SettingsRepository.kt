@@ -6,6 +6,7 @@ import androidx.core.content.edit
 import com.example.njupter.ui.animation.predictiveback.PredictiveBackAnimation
 import com.example.njupter.ui.animation.predictiveback.PredictiveBackExitDirection
 import com.example.njupter.ui.theme.AppThemeMode
+import com.example.njupter.ui.theme.CourseColorTone
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,6 +27,8 @@ interface SettingsRepository {
     suspend fun setAppThemeMode(mode: AppThemeMode)
     fun getDynamicColorEnabled(): Flow<Boolean>
     suspend fun setDynamicColorEnabled(enabled: Boolean)
+    fun getCourseColorTone(): Flow<CourseColorTone>
+    suspend fun setCourseColorTone(tone: CourseColorTone)
     fun getPredictiveBackAnimation(): Flow<PredictiveBackAnimation>
     suspend fun setPredictiveBackAnimation(animation: PredictiveBackAnimation)
     fun getPredictiveBackExitDirection(): Flow<PredictiveBackExitDirection>
@@ -45,6 +48,10 @@ interface SettingsRepository {
 
     fun peekDynamicColorEnabled(): Boolean {
         return (getDynamicColorEnabled() as? StateFlow)?.value ?: true
+    }
+
+    fun peekCourseColorTone(): CourseColorTone {
+        return (getCourseColorTone() as? StateFlow)?.value ?: CourseColorTone.STANDARD
     }
 
     fun peekPredictiveBackAnimation(): PredictiveBackAnimation {
@@ -68,6 +75,7 @@ class SharedPreferencesSettingsRepository(context: Context) : SettingsRepository
         private const val KEY_CURRENT_TIME_INDICATOR = "enable_current_time_indicator"
         private const val KEY_APP_THEME_MODE = "app_theme_mode"
         private const val KEY_DYNAMIC_COLOR = "dynamic_color"
+        private const val KEY_COURSE_COLOR_TONE = "course_color_tone"
         private const val KEY_PREDICTIVE_BACK_ANIMATION = "predictive_back_animation"
         private const val KEY_PREDICTIVE_BACK_EXIT_DIRECTION = "predictive_back_exit_direction"
     }
@@ -96,6 +104,9 @@ class SharedPreferencesSettingsRepository(context: Context) : SettingsRepository
         prefs.enumValue(KEY_APP_THEME_MODE, AppThemeMode.SYSTEM)
     )
     private val _dynamicColorEnabled = MutableStateFlow(prefs.getBoolean(KEY_DYNAMIC_COLOR, true))
+    private val _courseColorTone = MutableStateFlow(
+        prefs.enumValue(KEY_COURSE_COLOR_TONE, CourseColorTone.STANDARD)
+    )
     private val _predictiveBackAnimation = MutableStateFlow(
         prefs.enumValue(KEY_PREDICTIVE_BACK_ANIMATION, PredictiveBackAnimation.SCALE)
     )
@@ -155,6 +166,13 @@ class SharedPreferencesSettingsRepository(context: Context) : SettingsRepository
     override suspend fun setDynamicColorEnabled(enabled: Boolean) {
         prefs.edit { putBoolean(KEY_DYNAMIC_COLOR, enabled) }
         _dynamicColorEnabled.value = enabled
+    }
+
+    override fun getCourseColorTone(): Flow<CourseColorTone> = _courseColorTone.asStateFlow()
+
+    override suspend fun setCourseColorTone(tone: CourseColorTone) {
+        prefs.edit { putString(KEY_COURSE_COLOR_TONE, tone.name) }
+        _courseColorTone.value = tone
     }
 
     override fun getPredictiveBackAnimation(): Flow<PredictiveBackAnimation> =

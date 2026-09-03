@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Animation
 import androidx.compose.material.icons.filled.BlurOn
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.ViewDay
 import androidx.compose.material3.AlertDialog
@@ -49,9 +50,11 @@ import com.example.njupter.ui.settings.model.SettingsIcon
 import com.example.njupter.ui.settings.model.SettingsItem
 import com.example.njupter.ui.settings.model.SettingsSection
 import com.example.njupter.ui.theme.AppThemeMode
+import com.example.njupter.ui.theme.CourseColorTone
 
 private enum class ThemeChoiceDialog {
     THEME_MODE,
+    COLOR_TONE,
     PREDICTIVE_ANIMATION,
     EXIT_DIRECTION
 }
@@ -61,10 +64,12 @@ private enum class ThemeChoiceDialog {
 fun ThemeSettingsScreen(
     themeMode: AppThemeMode,
     dynamicColorEnabled: Boolean,
+    courseColorTone: CourseColorTone,
     predictiveBackAnimation: PredictiveBackAnimation,
     predictiveBackExitDirection: PredictiveBackExitDirection,
     onThemeModeChange: (AppThemeMode) -> Unit,
     onDynamicColorChange: (Boolean) -> Unit,
+    onCourseColorToneChange: (CourseColorTone) -> Unit,
     onPredictiveBackAnimationChange: (PredictiveBackAnimation) -> Unit,
     onPredictiveBackExitDirectionChange: (PredictiveBackExitDirection) -> Unit,
     onBack: () -> Unit
@@ -93,6 +98,13 @@ fun ThemeSettingsScreen(
                     onDynamicColorChange(!dynamicColorEnabled)
                 }
             }
+        ),
+        SettingsItem.Navigation(
+            icon = SettingsIcon.Vector(Icons.Default.Palette),
+            title = stringResource(R.string.card_color_tone),
+            description = stringResource(R.string.card_color_tone_summary),
+            value = courseColorTone.label(),
+            onClick = { choiceDialog = ThemeChoiceDialog.COLOR_TONE }
         )
     )
 
@@ -173,6 +185,20 @@ fun ThemeSettingsScreen(
                 onDismiss = { choiceDialog = null },
                 onConfirm = { index ->
                     values.getOrNull(index)?.let(onThemeModeChange)
+                    choiceDialog = null
+                }
+            )
+        }
+
+        ThemeChoiceDialog.COLOR_TONE -> {
+            val values = CourseColorTone.entries
+            SingleChoiceSettingsDialog(
+                title = stringResource(R.string.card_color_tone),
+                labels = values.map { it.label() },
+                selectedIndex = values.indexOf(courseColorTone),
+                onDismiss = { choiceDialog = null },
+                onConfirm = { index ->
+                    values.getOrNull(index)?.let(onCourseColorToneChange)
                     choiceDialog = null
                 }
             )
@@ -279,6 +305,13 @@ private fun AppThemeMode.label(): String = when (this) {
     AppThemeMode.SYSTEM -> stringResource(R.string.theme_mode_system)
     AppThemeMode.LIGHT -> stringResource(R.string.theme_mode_light)
     AppThemeMode.DARK -> stringResource(R.string.theme_mode_dark)
+}
+
+@Composable
+private fun CourseColorTone.label(): String = when (this) {
+    CourseColorTone.SOFT -> stringResource(R.string.card_color_tone_soft)
+    CourseColorTone.STANDARD -> stringResource(R.string.card_color_tone_standard)
+    CourseColorTone.VIVID -> stringResource(R.string.card_color_tone_vivid)
 }
 
 @Composable
