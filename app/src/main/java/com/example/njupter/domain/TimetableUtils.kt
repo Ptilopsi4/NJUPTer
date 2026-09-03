@@ -80,6 +80,38 @@ fun getMillisForWeekDay(
     }.timeInMillis
 }
 
+/**
+ * Material 3's DatePicker represents a calendar date as midnight UTC. App timetable dates,
+ * however, are interpreted in the device's local time zone. Preserve the local year/month/day
+ * when crossing that boundary so early-morning timestamps do not select the previous day.
+ */
+fun localDateMillisToDatePickerMillis(localDateMillis: Long): Long {
+    val localDate = Calendar.getInstance().apply { timeInMillis = localDateMillis }
+    return Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+        clear()
+        set(
+            localDate.get(Calendar.YEAR),
+            localDate.get(Calendar.MONTH),
+            localDate.get(Calendar.DAY_OF_MONTH)
+        )
+    }.timeInMillis
+}
+
+/** Converts a DatePicker UTC date back to local midnight for timetable storage and calculations. */
+fun datePickerMillisToLocalDateMillis(datePickerMillis: Long): Long {
+    val utcDate = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+        timeInMillis = datePickerMillis
+    }
+    return Calendar.getInstance().apply {
+        clear()
+        set(
+            utcDate.get(Calendar.YEAR),
+            utcDate.get(Calendar.MONTH),
+            utcDate.get(Calendar.DAY_OF_MONTH)
+        )
+    }.timeInMillis
+}
+
 private fun normalizedWeekStart(startDate: Long): Calendar {
     return startOfLocalDay(startDate).apply {
         // Some school calendars store the semester opening Sunday as the week

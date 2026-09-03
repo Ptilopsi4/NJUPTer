@@ -49,6 +49,26 @@ class TimetableUtilsTest {
         assertEquals(0, calendar.get(Calendar.MINUTE))
     }
 
+    @Test
+    fun `date picker keeps the local date during early morning`() {
+        val localEarlyMorning = millis(2026, Calendar.SEPTEMBER, 2, 1, 30)
+
+        val pickerMillis = localDateMillisToDatePickerMillis(localEarlyMorning)
+        val pickerUtc = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+            timeInMillis = pickerMillis
+        }
+        assertEquals(2026, pickerUtc.get(Calendar.YEAR))
+        assertEquals(Calendar.SEPTEMBER, pickerUtc.get(Calendar.MONTH))
+        assertEquals(2, pickerUtc.get(Calendar.DAY_OF_MONTH))
+
+        val storedMillis = datePickerMillisToLocalDateMillis(pickerMillis)
+        val storedLocal = Calendar.getInstance().apply { timeInMillis = storedMillis }
+        assertEquals(2026, storedLocal.get(Calendar.YEAR))
+        assertEquals(Calendar.SEPTEMBER, storedLocal.get(Calendar.MONTH))
+        assertEquals(2, storedLocal.get(Calendar.DAY_OF_MONTH))
+        assertEquals(0, storedLocal.get(Calendar.HOUR_OF_DAY))
+    }
+
     private fun millis(year: Int, month: Int, day: Int, hour: Int, minute: Int): Long {
         return Calendar.getInstance().apply {
             clear()
