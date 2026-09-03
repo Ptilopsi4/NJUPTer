@@ -28,12 +28,20 @@
     <string name="course_details">Course Details</string>
     <string name="course_name">Course Name</string>
     <string name="note">Note</string>
+    <string name="attendance_type">Attendance Type</string>
+
+    <string name="card_color_tone">Card Color Tone</string>
+    <string name="card_color_tone_summary">Adjust the intensity of course card colors</string>
+    <string name="card_color_tone_soft">Soft</string>
+    <string name="card_color_tone_standard">Standard</string>
+    <string name="card_color_tone_vivid">Vivid</string>
     <string name="teacher">Teacher</string>
     <string name="classroom">Classroom</string>
     <string name="time_settings">Time Settings</string>
     <string name="day_of_week">Day of Week</string>
     <string name="start_sec">Start Sec</string>
     <string name="end_sec">End Sec</string>
+    <string name="section_range">Section %1$s - %2$s</string>
     <string name="weeks">Weeks</string>
     <string name="weeks_none">None</string>
     <string name="weeks_selected">selected</string>
