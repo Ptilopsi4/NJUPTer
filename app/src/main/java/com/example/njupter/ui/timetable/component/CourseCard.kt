@@ -1,22 +1,25 @@
 package com.example.njupter.ui.timetable.component
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
-import com.example.njupter.ui.animation.pressScale
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -49,10 +52,12 @@ fun CourseCard(
     val activeBackgroundColor = remember(colorIndex, colorsList, fallbackColor) {
         if (colorsList.isNotEmpty()) colorsList[colorIndex] else fallbackColor
     }
-    val backgroundColor = if (isActiveInCurrentWeek) {
-        activeBackgroundColor
-    } else {
-        MaterialTheme.colorScheme.surfaceVariant
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val backgroundColor = when {
+        !isActiveInCurrentWeek -> MaterialTheme.colorScheme.surfaceVariant
+        isPressed -> activeBackgroundColor.copy(alpha = 0.72f)
+        else -> activeBackgroundColor
     }
     val contentColor = if (isActiveInCurrentWeek) {
         MaterialTheme.colorScheme.onSurface
@@ -60,22 +65,26 @@ fun CourseCard(
         MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.58f)
     }
 
-    val interactionSource = remember { MutableInteractionSource() }
+    val cardShape = RoundedCornerShape(8.dp)
 
-    Card(
+    // 不用 Card：它附带 elevation 阴影与 Surface 节点；课表卡片是平面格。
+    // 且反馈一律不做几何动画：pressScale / 波纹会在卡片重叠区逐帧改变面积，
+    // 而卡片在 CourseDayColumn 里是比例定位、彼此可以压盖的。
+    Box(
         modifier = modifier
             .padding(1.dp)
-            .pressScale(interactionSource)
+            .clip(cardShape)
+            .background(backgroundColor)
             .clickable(
                 interactionSource = interactionSource,
+                indication = null,
                 onClick = onClick
-            ),
-        shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = backgroundColor)
+            )
     ) {
         Column(
             modifier = Modifier
                 .padding(4.dp)
+                .fillMaxWidth()
                 .fillMaxHeight(),
             verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically)
         ) {
