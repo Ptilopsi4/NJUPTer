@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Build
+import android.app.Activity
 import android.view.animation.DecelerateInterpolator
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -95,6 +96,7 @@ class MainActivity : ComponentActivity() {
         }
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()  // 全面屏适配
+        requestPeakDisplayMode()  // 每 App 帧率策略下，显式要求窗口用最高刷新率模式
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val granted = ContextCompat.checkSelfPermission(
@@ -431,5 +433,22 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+}
+
+/**
+ * 请求本窗口使用机型支持的最高刷新率。
+ * 部分 OEM 会用自身的每 App 帧率策略覆盖 AOSP 的 ARR（View 投票、touch boost），
+ * 所以除 preferredRefreshRate 之外还要显式给出显示模式 id。
+ */
+private fun Activity.requestPeakDisplayMode() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return
+    val peak = display?.supportedModes
+        ?.filter { it.refreshRate > 60f }
+        ?.maxByOrNull { it.refreshRate }
+        ?: return
+    window.attributes = window.attributes.apply {
+        preferredRefreshRate = peak.refreshRate
+        preferredDisplayModeId = peak.modeId
     }
 }
