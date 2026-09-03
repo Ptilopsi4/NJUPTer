@@ -230,9 +230,11 @@ class MainActivity : ComponentActivity() {
                 // on every mutation, which would reschedule N times per import/add.
                 // ReminderScheduler reads current repo state when it fires, so we only
                 // need to trigger on structural changes.
+                // 无课表时同样要调用：scheduleUpcomingReminders 先 clearAll 再对 null id 早退，
+                // 跳过调用会让已删除课表的提醒留在系统里继续触发。
                 val reminderKey = uiState.isLoading to uiState.currentTimetableId
                 LaunchedEffect(reminderKey) {
-                    if (!uiState.isLoading && uiState.currentTimetableId != null) {
+                    if (!uiState.isLoading) {
                         reminderScheduler.scheduleUpcomingReminders(
                             courseInfos = uiState.courseInfos,
                             sessions = uiState.sessions,
