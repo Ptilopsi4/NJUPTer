@@ -18,7 +18,7 @@ interface SettingsRepository {
     fun getAppLanguageTag(): Flow<String>
     suspend fun setAppLanguageTag(languageTag: String)
     fun getLastSelectedTimetableId(): Flow<String?>
-    suspend fun setLastSelectedTimetableId(id: String)
+    suspend fun setLastSelectedTimetableId(id: String?)
     fun getLastWeekRecords(): Flow<Map<String, Int>>
     suspend fun setLastWeekForTimetable(id: String, week: Int)
     fun getEnableCurrentTimeIndicator(): Flow<Boolean>
@@ -133,8 +133,11 @@ class SharedPreferencesSettingsRepository(context: Context) : SettingsRepository
 
     override fun getLastSelectedTimetableId(): Flow<String?> = _lastSelectedTimetableId.asStateFlow()
 
-    override suspend fun setLastSelectedTimetableId(id: String) {
-        prefs.edit { putString(KEY_LAST_SELECTED_TIMETABLE_ID, id) }
+    override suspend fun setLastSelectedTimetableId(id: String?) {
+        prefs.edit {
+            if (id == null) remove(KEY_LAST_SELECTED_TIMETABLE_ID)
+            else putString(KEY_LAST_SELECTED_TIMETABLE_ID, id)
+        }
         _lastSelectedTimetableId.value = id
     }
 

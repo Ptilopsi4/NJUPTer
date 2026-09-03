@@ -175,6 +175,7 @@ class FileTimetableRepository(
                 _currentTimetableName.value = ""
                 _courseInfos.value = emptyList()
                 _courseSessions.value = emptyList()
+                settingsRepository.setLastSelectedTimetableId(null)
             }
         }
         undoStacks.remove(id)
