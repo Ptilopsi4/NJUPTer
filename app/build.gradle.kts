@@ -34,6 +34,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // 开发期用 debug 签名装机测 release 性能（debuggable=false 才能测到真实帧成本）
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {

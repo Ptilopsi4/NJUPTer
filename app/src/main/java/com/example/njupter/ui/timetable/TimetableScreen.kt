@@ -40,6 +40,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Constraints
@@ -123,6 +125,10 @@ fun TimetableScreen(
     val currentCourseColors = getCourseColors(courseColorTone)
     val isDark = isAppInDarkTheme()
     val courseMap = remember(courseInfos) { courseInfos.associateBy { it.id } }
+    // 课程卡文本的 layout 缓存放在屏级：同一课程跨周页文本与约束一致，
+    // 翻页时直接命中，省掉每页 26 个 Text 节点的 StaticLayout 构建。
+    // 容量按 5–7 列 × 13 卡 × 2 文本 × 多页驻留估算。
+    val courseTextMeasurer = rememberTextMeasurer(cacheSize = 128)
 
     // Auto 色分配：避免手动色后，按课程名哈希为种子做线性探测，
     // 保证 Auto 课程之间（及与手动色）尽量不撞色
@@ -391,7 +397,9 @@ fun TimetableScreen(
                         }
                         Spacer(Modifier.height(2.dp))
                         Text(
-                            text = stringResource(R.string.week, pagerState.currentPage + 1),
+                            // 读 settledPage：currentPage 在拖动途中随 offset 变化，
+                            // 每帧重组 topBar 周数文本，计入滑动帧的重组预算。
+                            text = stringResource(R.string.week, pagerState.settledPage + 1),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -539,6 +547,10 @@ fun TimetableScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
+                            // 页面内容录进独立 RenderNode：滑动中 pager 每帧只平移 layer，
+                            // 不重录网格线/卡片背景/文本的 display list（未 layer 时每帧
+                            // 在主线程重录两页全部 draw ops，是滑动途中每帧成本的大头）。
+                            .graphicsLayer()
                             .verticalScroll(pageScrollState)
                     ) {
                         Row(
@@ -703,6 +715,7 @@ fun TimetableScreen(
                                     maxSection = maxSection,
                                     colorsList = currentCourseColors,
                                     autoColorIndices = autoColorIndices,
+                                    textMeasurer = courseTextMeasurer,
                                     onCourseClick = { session, course ->
                                         courseDetailsSelection = CourseDetailsSelection(
                                             session = session,
@@ -901,6 +914,7 @@ private fun CourseDayColumn(
     maxSection: Int,
     colorsList: List<Color>,
     autoColorIndices: Map<String, Int>,
+    textMeasurer: TextMeasurer,
     onCourseClick: (CourseSession, CourseInfo) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -913,6 +927,7 @@ private fun CourseDayColumn(
                     colorsList = colorsList,
                     isActiveInCurrentWeek = item.isActiveInCurrentWeek,
                     autoColorIndex = autoColorIndices[item.course.id],
+                    textMeasurer = textMeasurer,
                     onClick = { onCourseClick(item.session, item.course) }
                 )
             }
