@@ -33,14 +33,21 @@ class JwxtParser {
             ?: throw IllegalArgumentException("未找到课表数据，请确认统一认证已经完成")
 
         var currentDay = -1
+        var currentSlot: Pair<Int, Int>? = null
         for (row in table.select("tr")) {
             row.selectFirst("span.week")?.text()?.let { dayText ->
                 currentDay = parseDay(dayText)
             }
 
-            val sectionText = row.selectFirst("span.festival")?.text() ?: continue
-            val (startSection, endSection) = parseSections(sectionText)
-            if (currentDay == -1 || startSection == -1) continue
+            // 同一格的第二门课（单双周、1-8/9-18 分段）与第一门共用 rowspan 的
+            // 节次单元格，其所在行没有 span.festival；此时沿用上一行的槽位，
+            // 否则第二门课会被整行跳过。
+            row.selectFirst("span.festival")?.text()?.let { sectionText ->
+                val (startSection, endSection) = parseSections(sectionText)
+                if (startSection != -1) currentSlot = startSection to endSection
+            }
+            val slot = currentSlot ?: continue
+            if (currentDay == -1) continue
 
             for (block in row.select("div.timetable_con")) {
                 // 红色斜体是“待筛选”课程，不属于已经选上的课表。
@@ -50,7 +57,7 @@ class JwxtParser {
                     ?.lowercase()
                 if (titleColor == "red") continue
 
-                parseCourseBlock(block, currentDay, startSection, endSection)
+                parseCourseBlock(block, currentDay, slot.first, slot.second)
                     ?.let(courses::add)
             }
         }

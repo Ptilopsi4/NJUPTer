@@ -34,6 +34,48 @@ class JwxtParserTest {
     }
 
     @Test
+    fun parseHtml_readsPairedSlotCoursesThatShareRowspanedFestivalCell() {
+        // 真实页面中同格两门课共用 rowspan 的节次单元格：第二门课所在行
+        // 没有 span.festival，必须沿用上一行的节次，不能整行跳过。
+        val html = """
+            <table id="kblist_table">
+              <tr><td id="xq_rowspan_4" rowspan="2"><span class="week">星期四</span></td></tr>
+              <tr>
+                <td id="jc_4-3-4" rowspan="2"><span class="festival">3-4</span></td>
+                <td>
+                  <div class="timetable_con text-left">
+                    <span class="title"><font color="blue">单周课程</font></span>
+                    <p><font color="blue">周数：1-17周(单)</font><font color="blue">上课地点：教4－309</font></p>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="timetable_con text-left">
+                    <span class="title"><font color="blue">双周课程</font></span>
+                    <p><font color="blue">周数：2-18周(双)</font><font color="blue">上课地点：教4－406</font></p>
+                  </div>
+                </td>
+              </tr>
+            </table>
+        """.trimIndent()
+
+        val courses = parser.parseHtml(html)
+
+        assertEquals(2, courses.size)
+        val odd = courses.first { it.name == "单周课程" }
+        val even = courses.first { it.name == "双周课程" }
+        assertEquals((1..17).filter { it % 2 == 1 }, odd.weeks)
+        assertEquals((2..18).filter { it % 2 == 0 }, even.weeks)
+        assertEquals(4, odd.dayOfWeek)
+        assertEquals(4, even.dayOfWeek)
+        assertEquals(3, odd.startSection)
+        assertEquals(3, even.startSection)
+        assertEquals(4, odd.endSection)
+        assertEquals(4, even.endSection)
+    }
+
+    @Test
     fun parseHtml_reportsAuthenticationPageInsteadOfReturningEmptyData() {
         assertThrows(IllegalArgumentException::class.java) {
             parser.parseHtml("<html><body><form id='login'>统一认证</form></body></html>")
