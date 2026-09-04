@@ -520,7 +520,6 @@ fun TimetableScreen(
                         // Android 15+ 的 ARR 默认把 App 压在 60Hz；该节点只在需要重绘时投票，
                         // 所以滑动/惯性期间才会抬到高刷，静止页面不会长期占用高帧率。
                         .preferredFrameRate(FrameRateCategory.High),
-                    beyondViewportPageCount = 1,
                     verticalAlignment = Alignment.Top
                 ) { page ->
                     val currentWeek = page + 1
