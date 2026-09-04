@@ -145,7 +145,7 @@
     <string name="error_start_after_end">错误：开始节次（%1$d）不能大于结束节次（%2$d）。</string>
     <string name="error_no_week">错误：至少需要选择一周。</string>
     <string name="error_time_conflict">错误：与已有时段冲突：周%1$d，第%2$d-%3$d节。</string>
-    <string name="error_course_duplicate">错误：课程 \'%1$s\'（教师：%2$s，教室：%3$s）已存在。</string>
+    <string name="error_course_duplicate">错误：课程 \'%1$s\'（教师：%2$s）已存在。</string>
     <string name="error_unknown">未知错误</string>
 
     <!-- Import Summary -->

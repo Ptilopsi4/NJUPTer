@@ -924,6 +924,7 @@ private fun CourseDayColumn(
             sessions.forEach { item ->
                 CourseCard(
                     course = item.course,
+                    classroom = item.session.classroom,
                     colorsList = colorsList,
                     isActiveInCurrentWeek = item.isActiveInCurrentWeek,
                     autoColorIndex = autoColorIndices[item.course.id],
@@ -1016,14 +1017,12 @@ fun TimetableScreenPreview() {
             id = "c1",
             name = "Data Structures",
             teacher = "Prof. Li",
-            classroom = "A-203",
             colorIndex = 0
         ),
         CourseInfo(
             id = "c2",
             name = "Mobile Development",
             teacher = "Prof. Wang",
-            classroom = "B-512",
             colorIndex = 2
         )
     )
@@ -1034,14 +1033,16 @@ fun TimetableScreenPreview() {
             day = 1,
             startSection = 1,
             endSection = 2,
-            weeks = (1..16).toList()
+            weeks = (1..16).toList(),
+            classroom = "A-203"
         ),
         CourseSession(
             courseId = "c2",
             day = 3,
             startSection = 5,
             endSection = 6,
-            weeks = (1..16).toList()
+            weeks = (1..16).toList(),
+            classroom = "B-512"
         )
     )
 

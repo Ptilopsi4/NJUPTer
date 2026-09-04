@@ -32,8 +32,7 @@ class TimetableImportMatcherTest {
         val existingCourse = CourseInfo(
             id = "existing",
             name = "信号与系统",
-            teacher = "孙老师",
-            classroom = "教3-300"
+            teacher = "孙老师"
         )
         val existingSession = CourseSession(
             courseId = existingCourse.id,
@@ -52,15 +51,64 @@ class TimetableImportMatcherTest {
         assertTrue(result.newCourses.isEmpty())
         assertEquals(listOf(3, 4), result.newSessions.single().weeks)
         assertEquals(existingCourse.id, result.newSessions.single().courseId)
+        assertEquals("教3－300", result.newSessions.single().classroom)
     }
 
-    private fun remote(name: String, weeks: List<Int>) = RemoteCourse(
+    @Test
+    fun matchAndConvert_mergesSameCourseAcrossDifferentRoomsIntoSessions() {
+        // 同一门课每周两次、教室不同：应合并为一条课程记录，教室分属各 session
+        val result = matcher.matchAndConvert(
+            remoteCourses = listOf(
+                remote(name = "数据库系统原理", weeks = (1..18).toList()),
+                remote(
+                    name = " 数据库系统原理 ",
+                    weeks = (1..17).filter { it % 2 == 1 },
+                    day = 4,
+                    classroom = "教4－309"
+                )
+            ),
+            existingCourses = emptyList(),
+            existingSessions = emptyList()
+        )
+
+        assertEquals(1, result.newCourses.size)
+        assertEquals(2, result.newSessions.size)
+        assertEquals("教3－300", result.newSessions.first { it.day == 1 }.classroom)
+        assertEquals("教4－309", result.newSessions.first { it.day == 4 }.classroom)
+    }
+
+    @Test
+    fun matchAndConvert_keepsDistinctClassroomsPerSession() {
+        val odd = RemoteCourse(
+            name = "课程A",
+            teacher = "张三",
+            classroom = "教1-101",
+            dayOfWeek = 1,
+            startSection = 1,
+            endSection = 2,
+            weeks = (1..16).filter { it % 2 == 1 }
+        )
+        val even = odd.copy(name = "课程B", classroom = "教2-202", weeks = (1..16).filter { it % 2 == 0 })
+
+        val result = matcher.matchAndConvert(listOf(odd, even), emptyList(), emptyList())
+
+        assertEquals(2, result.newCourses.size)
+        assertEquals("教1-101", result.newSessions.first { it.weeks.first() == 1 }.classroom)
+        assertEquals("教2-202", result.newSessions.first { it.weeks.first() == 2 }.classroom)
+    }
+
+    private fun remote(
+        name: String,
+        weeks: List<Int>,
+        day: Int = 1,
+        classroom: String = "教3－300"
+    ) = RemoteCourse(
         name = name,
         teacher = "孙老师",
-        classroom = "教3－300",
+        classroom = classroom,
         credit = "2.5",
         courseNature = "限选",
-        dayOfWeek = 1,
+        dayOfWeek = day,
         startSection = 1,
         endSection = 2,
         weeks = weeks

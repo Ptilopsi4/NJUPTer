@@ -146,7 +146,7 @@
     <string name="error_start_after_end">Error: Start section (%1$d) cannot be greater than End section (%2$d).</string>
     <string name="error_no_week">Error: At least one week must be selected.</string>
     <string name="error_time_conflict">Error: Time conflict with existing session: Day %1$d, Sections %2$d-%3$d.</string>
-    <string name="error_course_duplicate">Error: Course \'%1$s\' with teacher \'%2$s\' in room \'%3$s\' already exists.</string>
+    <string name="error_course_duplicate">Error: Course \'%1$s\' with teacher \'%2$s\' already exists.</string>
     <string name="error_unknown">Unknown error</string>
 
     <!-- Import Summary -->

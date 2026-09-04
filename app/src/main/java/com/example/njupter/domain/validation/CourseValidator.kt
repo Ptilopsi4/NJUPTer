@@ -9,7 +9,7 @@ sealed class ValidationError {
     data class StartAfterEnd(val start: Int, val end: Int) : ValidationError()
     object NoWeekSelected : ValidationError()
     data class TimeConflict(val day: Int, val startSection: Int, val endSection: Int) : ValidationError()
-    data class CourseDuplicate(val name: String, val teacher: String, val classroom: String) : ValidationError()
+    data class CourseDuplicate(val name: String, val teacher: String) : ValidationError()
 }
 
 object CourseValidator {
@@ -88,18 +88,16 @@ object CourseValidator {
         currentId: String,
         name: String,
         teacher: String,
-        classroom: String,
         existingCourses: List<CourseInfo>
     ): ValidationError? {
         val duplicate = existingCourses.find {
             it.name == name &&
             it.teacher == teacher &&
-            it.classroom == classroom &&
             it.id != currentId
         }
 
         if (duplicate != null) {
-            return ValidationError.CourseDuplicate(name, teacher, classroom)
+            return ValidationError.CourseDuplicate(name, teacher)
         }
 
         return null

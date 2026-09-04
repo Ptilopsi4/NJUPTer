@@ -92,7 +92,7 @@ fun CourseDetailsBottomSheet(
             )
             CourseDetailRow(
                 label = stringResource(R.string.classroom),
-                value = course.classroom.ifBlank { stringResource(R.string.not_set) }
+                value = session.classroom.ifBlank { stringResource(R.string.not_set) }
             )
             CourseDetailRow(
                 label = stringResource(R.string.course_credit),

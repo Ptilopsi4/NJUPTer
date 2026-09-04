@@ -67,7 +67,7 @@ class CourseReminderScheduler(private val context: Context) {
                     putExtra(CourseReminderContract.EXTRA_NOTIFICATION_ID, requestCode)
                     putExtra(CourseReminderContract.EXTRA_COURSE_NAME, course.name)
                     putExtra(CourseReminderContract.EXTRA_TIME_TEXT, timeText)
-                    putExtra(CourseReminderContract.EXTRA_CLASSROOM, course.classroom)
+                    putExtra(CourseReminderContract.EXTRA_CLASSROOM, session.classroom)
                     putExtra(CourseReminderContract.EXTRA_TEACHER, course.teacher)
                 }
 

@@ -145,7 +145,7 @@ private fun courseEntries(
                 ?.substringAfter("-")?.trim().orEmpty()
             WidgetCourseEntry(
                 name = course.name,
-                classroom = course.classroom,
+                classroom = session.classroom,
                 teacher = course.teacher,
                 colorIndex = course.colorIndex,
                 startSection = session.startSection,

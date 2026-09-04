@@ -27,11 +27,11 @@ class TimetableImportMatcher {
         val newInfos = mutableListOf<CourseInfo>()
         val pendingSessions = linkedMapOf<SessionKey, CourseSession>()
 
-        // 课程名称和地点会混用空格、全角括号与全角横线；用规范化键匹配，
-        // 展示时仍保留教务系统返回的可读文本。
+        // 同一门课每周多次、教室可能不同，所以教室归属 session 而不是课程；
+        // 课程同名同教师视为同一门。展示时仍保留教务系统返回的可读文本。
         val courseMap = mutableMapOf<String, CourseInfo>()
         existingCourses.forEach {
-            courseMap[courseKey(it.name, it.teacher, it.classroom)] = it
+            courseMap[courseKey(it.name, it.teacher)] = it
         }
 
         val existingWeeksBySession = existingSessions
@@ -42,13 +42,12 @@ class TimetableImportMatcher {
             if (remote.weeks.isEmpty()) return@forEach
 
             val courseInfo = courseMap.getOrPut(
-                courseKey(remote.name, remote.teacher, remote.classroom)
+                courseKey(remote.name, remote.teacher)
             ) {
                 val newCourse = CourseInfo(
                     id = UUID.randomUUID().toString(),
                     name = cleanDisplayText(remote.name),
                     teacher = cleanDisplayText(remote.teacher),
-                    classroom = cleanDisplayText(remote.classroom),
                     colorIndex = -1,
                     credit = cleanDisplayText(remote.credit),
                     courseNature = cleanDisplayText(remote.courseNature)
@@ -76,7 +75,8 @@ class TimetableImportMatcher {
                 day = remote.dayOfWeek,
                 startSection = remote.startSection,
                 endSection = remote.endSection,
-                weeks = (previous?.weeks.orEmpty() + missingWeeks).distinct().sorted()
+                weeks = (previous?.weeks.orEmpty() + missingWeeks).distinct().sorted(),
+                classroom = cleanDisplayText(remote.classroom)
             )
         }
 
@@ -88,8 +88,8 @@ class TimetableImportMatcher {
         )
     }
 
-    private fun courseKey(name: String, teacher: String, classroom: String): String =
-        listOf(name, teacher, classroom).joinToString("|") { canonicalize(it) }
+    private fun courseKey(name: String, teacher: String): String =
+        listOf(name, teacher).joinToString("|") { canonicalize(it) }
 
     private fun canonicalize(value: String): String =
         value

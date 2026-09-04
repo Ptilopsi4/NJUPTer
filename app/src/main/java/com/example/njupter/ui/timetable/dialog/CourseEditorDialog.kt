@@ -50,7 +50,7 @@ private fun ValidationError.toLocalizedString(context: Context): String {
         is ValidationError.StartAfterEnd -> context.getString(R.string.error_start_after_end, start, end)
         is ValidationError.NoWeekSelected -> context.getString(R.string.error_no_week)
         is ValidationError.TimeConflict -> context.getString(R.string.error_time_conflict, day, startSection, endSection)
-        is ValidationError.CourseDuplicate -> context.getString(R.string.error_course_duplicate, name, teacher, classroom)
+        is ValidationError.CourseDuplicate -> context.getString(R.string.error_course_duplicate, name, teacher)
     }
 }
 
@@ -78,7 +78,7 @@ fun CourseEditorDialog(
     var courseId by remember { mutableStateOf(initialCourse?.id ?: UUID.randomUUID().toString()) }
     var courseName by remember { mutableStateOf(initialCourse?.name ?: "") }
     var teacher by remember { mutableStateOf(initialCourse?.teacher ?: "") }
-    var classroom by remember { mutableStateOf(initialCourse?.classroom ?: "") }
+    var classroom by remember(initialSession) { mutableStateOf(initialSession?.classroom ?: "") }
     var note by remember { mutableStateOf(initialCourse?.note ?: "") }
     var attendanceType by remember { mutableStateOf(initialCourse?.attendanceType ?: "") }
     var selectedColorIndex by remember { mutableStateOf(initialCourse?.colorIndex ?: -1) }
@@ -227,7 +227,6 @@ fun CourseEditorDialog(
                     currentId = courseId,
                     name = courseName,
                     teacher = teacher,
-                    classroom = classroom,
                     existingCourses = existingCourses
                 )
 
@@ -241,7 +240,6 @@ fun CourseEditorDialog(
                     id = courseId,
                     name = courseName,
                     teacher = teacher,
-                    classroom = classroom,
                     colorIndex = selectedColorIndex,
                     credit = initialCourse?.credit.orEmpty(),
                     courseNature = initialCourse?.courseNature.orEmpty(),
@@ -254,7 +252,8 @@ fun CourseEditorDialog(
                     day = d,
                     startSection = s,
                     endSection = e,
-                    weeks = weeksList
+                    weeks = weeksList,
+                    classroom = classroom.trim()
                 )
                 
                 onSave(info, finalSession, initialCourse == null)

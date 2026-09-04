@@ -43,6 +43,7 @@ import kotlin.math.roundToInt
 @Composable
 fun CourseCard(
     course: CourseInfo,
+    classroom: String,
     colorsList: List<Color>,
     isActiveInCurrentWeek: Boolean = true,
     autoColorIndex: Int? = null,
@@ -104,10 +105,10 @@ fun CourseCard(
                 onClick = onClick
             )
             .semantics {
-                if (course.classroom.isEmpty()) {
+                if (classroom.isEmpty()) {
                     contentDescription = course.name
                 } else {
-                    contentDescription = "${course.name} ${course.classroom}"
+                    contentDescription = "${course.name} $classroom"
                 }
             }
             // 文本可用区：与原 Column(padding 4dp) 对齐，且让 DrawScope.size 即文本可用尺寸
@@ -121,11 +122,11 @@ fun CourseCard(
                     overflow = TextOverflow.Ellipsis,
                     constraints = Constraints(maxWidth = textSpace)
                 )
-                val roomLayout = if (course.classroom.isEmpty()) {
+                val roomLayout = if (classroom.isEmpty()) {
                     null
                 } else {
                     textMeasurer.measure(
-                        text = AnnotatedString("@${course.classroom}"),
+                        text = AnnotatedString("@$classroom"),
                         style = roomStyle,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
@@ -158,7 +159,8 @@ fun CourseCardPreview() {
     )
     MaterialTheme {
         CourseCard(
-            course = CourseInfo("1", "高等数学", "张老师", "教 1-101", 0),
+            course = CourseInfo("1", "高等数学", "张老师", 0),
+            classroom = "教 1-101",
             colorsList = sampleColors,
             textMeasurer = rememberTextMeasurer(),
             onClick = {},

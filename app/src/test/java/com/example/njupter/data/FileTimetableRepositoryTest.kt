@@ -103,7 +103,6 @@ class FileTimetableRepositoryTest {
         id = id,
         name = id,
         teacher = "",
-        classroom = "",
         colorIndex = 0
     )
 }

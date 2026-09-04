@@ -105,7 +105,6 @@ class LocalFileDataSource(private val context: Context) : TimetableDataSource {
                         id = it.id,
                         name = it.name,
                         teacher = it.teacher,
-                        classroom = it.room,
                         colorIndex = it.colorIndex,
                         credit = it.credit.orEmpty(),
                         courseNature = it.courseNature.orEmpty(),
@@ -119,7 +118,8 @@ class LocalFileDataSource(private val context: Context) : TimetableDataSource {
                         day = it.dayOfWeek,
                         startSection = it.startNode,
                         endSection = it.startNode + it.length - 1,
-                        weeks = it.weeks ?: (1..20).toList()
+                        weeks = it.weeks ?: (1..20).toList(),
+                        classroom = it.classroom.orEmpty()
                     )
                 }
                 return@withContext TimetableData(domainCourses, domainSessions)
@@ -138,7 +138,6 @@ class LocalFileDataSource(private val context: Context) : TimetableDataSource {
                     id = it.id,
                     name = it.name,
                     teacher = it.teacher,
-                    room = it.classroom,
                     colorIndex = it.colorIndex,
                     credit = it.credit,
                     courseNature = it.courseNature,
@@ -152,7 +151,8 @@ class LocalFileDataSource(private val context: Context) : TimetableDataSource {
                     dayOfWeek = it.day,
                     startNode = it.startSection,
                     length = it.endSection + 1 - it.startSection,
-                    weeks = it.weeks
+                    weeks = it.weeks,
+                    classroom = it.classroom
                 )
             }
         )

@@ -17,9 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.njupter.R
 import com.example.njupter.data.CourseInfo
 import com.example.njupter.data.CourseSession
-import com.example.njupter.R
 import com.example.njupter.domain.import.TimetableImportMatcher
 import com.example.njupter.ui.theme.NJUPTerTheme
 
@@ -80,7 +80,6 @@ private fun ImportPreviewDialogPreview() {
                         id = "preview-course-1",
                         name = "Advanced Mathematics",
                         teacher = "Dr. Smith",
-                        classroom = "A101",
                         colorIndex = 0
                     )
                 ),
@@ -90,7 +89,8 @@ private fun ImportPreviewDialogPreview() {
                         day = 1,
                         startSection = 1,
                         endSection = 2,
-                        weeks = listOf(1, 2, 3)
+                        weeks = listOf(1, 2, 3),
+                        classroom = "A101"
                     )
                 ),
                 summary = "Found 1 new course and 1 new session."

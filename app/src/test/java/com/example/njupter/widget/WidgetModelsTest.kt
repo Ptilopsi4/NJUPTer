@@ -16,10 +16,10 @@ import java.util.TimeZone
 class WidgetModelsTest {
     private lateinit var originalTimeZone: TimeZone
     private val courses = listOf(
-        CourseInfo("m1", "Morning one", "Teacher A", "A101", 0),
-        CourseInfo("m2", "Morning two", "Teacher B", "A102", 1),
-        CourseInfo("t1", "Tomorrow one", "Teacher C", "A103", 2),
-        CourseInfo("late", "Late course", "Teacher D", "A104", 3)
+        CourseInfo("m1", "Morning one", "Teacher A", 0),
+        CourseInfo("m2", "Morning two", "Teacher B", 1),
+        CourseInfo("t1", "Tomorrow one", "Teacher C", 2),
+        CourseInfo("late", "Late course", "Teacher D", 3)
     )
 
     @Before
