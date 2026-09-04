@@ -193,10 +193,10 @@ class MainActivity : ComponentActivity() {
                     importState.result?.let { result ->
                         ImportPreviewDialog(
                             importResult = result,
-                            onConfirm = { name ->
+                            onConfirm = { name, startDate ->
                                 viewModel.createAndImportTimetable(
                                     name = name,
-                                    startDate = System.currentTimeMillis(),
+                                    startDate = startDate,
                                     totalWeeks = 20,
                                     showWeekends = true,
                                     sessionTimes = defaultSessionTimes,

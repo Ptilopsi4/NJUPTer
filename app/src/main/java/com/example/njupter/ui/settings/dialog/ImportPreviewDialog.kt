@@ -1,19 +1,23 @@
 package com.example.njupter.ui.settings.dialog
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -22,15 +26,32 @@ import com.example.njupter.data.CourseInfo
 import com.example.njupter.data.CourseSession
 import com.example.njupter.domain.import.TimetableImportMatcher
 import com.example.njupter.ui.theme.NJUPTerTheme
+import com.example.njupter.ui.timetable.dialog.StartDateDialog
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun ImportPreviewDialog(
     importResult: TimetableImportMatcher.ImportResult,
-    onConfirm: (String) -> Unit,
+    onConfirm: (String, Long) -> Unit,
     onDismiss: () -> Unit
 ) {
     val defaultName = stringResource(R.string.imported_timetable_name)
     var name by remember(defaultName) { mutableStateOf(defaultName) }
+    var startDate by remember { mutableStateOf(System.currentTimeMillis()) }
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    if (showDatePicker) {
+        StartDateDialog(
+            initialDateMillis = startDate,
+            onDismiss = { showDatePicker = false },
+            onConfirm = {
+                startDate = it
+                showDatePicker = false
+            }
+        )
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -50,12 +71,30 @@ fun ImportPreviewDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+                // 开学日期决定周次计算，单双周课程的显示随它而定
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                OutlinedTextField(
+                    value = dateFormat.format(Date(startDate)),
+                    onValueChange = { },
+                    label = { Text(stringResource(R.string.start_date)) },
+                    readOnly = true,
+                    enabled = false,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showDatePicker = true },
+                    colors = TextFieldDefaults.colors(
+                        disabledContainerColor = Color.Transparent,
+                        disabledIndicatorColor = MaterialTheme.colorScheme.outline,
+                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        disabledTextColor = MaterialTheme.colorScheme.onSurface
+                    )
+                )
                 Text(text = stringResource(R.string.import_desc))
             }
         },
         confirmButton = {
             Button(
-                onClick = { onConfirm(name) },
+                onClick = { onConfirm(name, startDate) },
                 enabled = name.isNotBlank()
             ) {
                 Text(stringResource(R.string.create_and_import))
@@ -95,7 +134,7 @@ private fun ImportPreviewDialogPreview() {
                 ),
                 summary = "Found 1 new course and 1 new session."
             ),
-            onConfirm = {},
+            onConfirm = { _, _ -> },
             onDismiss = {}
         )
     }
