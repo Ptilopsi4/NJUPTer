@@ -43,7 +43,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.Dp
 import com.example.njupter.R
 import com.example.njupter.data.CourseInfo
 import com.example.njupter.data.CourseSession
@@ -201,7 +200,6 @@ fun TimetableScreen(
     var showNewTimetableDialog by remember { mutableStateOf(false) }
     var timetableToDelete by remember { mutableStateOf<TimetableMetadata?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
-    val gridScrollState = rememberScrollState()
 
     val showCurrentTimeIndicator = enableCurrentTimeIndicator && todayDayOfWeek <= daysCount && currentSectionPosition != null
     val currentSectionIndex = currentSectionPosition?.first
@@ -490,39 +488,18 @@ fun TimetableScreen(
             }
         }
     ) { innerPadding ->
-        Column(
+        HorizontalPager(
+            state = pagerState,
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .padding(innerPadding)
-                .verticalScroll(gridScrollState)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(headerHeight + sectionHeight * maxSection)
-            ) {
-                // 侧栏与周次无关，只组一份；竖向滚动也整表共享，各周对齐同一位置
-                TimetableSectionSidebar(
-                    modifier = Modifier.width(sidebarWidth),
-                    headerHeight = headerHeight,
-                    headerBg = gridHeaderBg,
-                    gridBg = gridContentBg,
-                    sessionTimes = sessionTimes,
-                    maxSection = maxSection,
-                    currentSectionIndex = currentSectionIndex,
-                    highlightCurrentSection = showCurrentTimeIndicator
-                )
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        // Android 15+ 的 ARR 默认把 App 压在 60Hz；该节点只在需要重绘时投票，
-                        // 所以滑动/惯性期间才会抬到高刷，静止页面不会长期占用高帧率。
-                        .preferredFrameRate(FrameRateCategory.High),
-                    verticalAlignment = Alignment.Top
-                ) { page ->
-                    val currentWeek = page + 1
+                // Android 15+ 的 ARR 默认把 App 压在 60Hz；该节点只在需要重绘时投票，
+                // 所以滑动/惯性期间才会抬到高刷，静止页面不会长期占用高帧率。
+                .preferredFrameRate(FrameRateCategory.High),
+            verticalAlignment = Alignment.Top
+        ) { page ->
+            val currentWeek = page + 1
+            val pageScrollState = rememberScrollState()
 
                     val sessionsByDay = remember(
                         courseSessions,
@@ -562,12 +539,18 @@ fun TimetableScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
+                            .verticalScroll(pageScrollState)
                     ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .background(gridHeaderBg)
                         ) {
+                            Box(
+                                modifier = Modifier
+                                    .width(sidebarWidth)
+                                    .height(headerHeight)
+                            )
 
                             dayLabels.forEachIndexed { index, dayLabel ->
                                 val dateString = getDateForWeekDay(
@@ -637,6 +620,15 @@ fun TimetableScreen(
                         .height(sectionHeight * maxSection)
                         .background(gridContentBg)
                 ) {
+                    TimetableSectionSidebar(
+                        modifier = Modifier.width(sidebarWidth),
+                        gridBg = gridContentBg,
+                        sessionTimes = sessionTimes,
+                        maxSection = maxSection,
+                        currentSectionIndex = currentSectionIndex,
+                        highlightCurrentSection = showCurrentTimeIndicator
+                    )
+
                     // Course content area
                     Box(
                         modifier = Modifier
@@ -756,8 +748,6 @@ fun TimetableScreen(
 
             }
         }
-            }
-        }
 
         if (showDialog) {
             CourseEditorDialog(
@@ -821,8 +811,6 @@ internal fun gridCellIndex(positionPx: Float, extentPx: Float, count: Int): Int 
 @Composable
 private fun TimetableSectionSidebar(
     modifier: Modifier = Modifier,
-    headerHeight: Dp,
-    headerBg: Color,
     gridBg: Color,
     sessionTimes: List<String>,
     maxSection: Int,
@@ -834,13 +822,6 @@ private fun TimetableSectionSidebar(
             .fillMaxHeight()
             .background(gridBg),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(headerHeight)
-                .background(headerBg)
-        )
-
         (1..maxSection).forEach { section ->
             val isCurrentSection = highlightCurrentSection && currentSectionIndex == section - 1
             val sectionContainerColor = if (isCurrentSection) {
