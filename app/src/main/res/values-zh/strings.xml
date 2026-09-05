@@ -69,7 +69,6 @@
 
     <!-- Me Screen -->
     <string name="show_weekends">显示周末</string>
-    <string name="show_weekends_desc">在课程表中显示周六和周日</string>
 
     <!-- Timetable Selector Dialog -->
     <string name="new_timetable">新建课程表</string>
@@ -85,9 +84,6 @@
     <string name="jump_to_week">跳转到周</string>
 
     <!-- Content Descriptions -->
-    <string name="cd_switch_timetable">切换课程表</string>
-    <string name="cd_previous_week">上一周</string>
-    <string name="cd_next_week">下一周</string>
     <string name="cd_add_course">添加课程</string>
     <string name="cd_undo">撤销</string>
     <string name="undo_done">已撤销最近修改</string>
@@ -105,8 +101,6 @@
     <string name="no_timetable_title">还没有课程表</string>
     <string name="no_timetable_desc">创建一个新课程表以开始</string>
     <string name="create_timetable">创建课程表</string>
-    <string name="session_times">每节课时间</string>
-    <string name="session_times_desc">调整每节课的开始/结束时间</string>
     <string name="cur_timetable_settings">编辑当前课表</string>
 
     <!-- Session Time Editor Dialog -->
@@ -137,7 +131,6 @@
 
     <!-- Course Editor -->
     <string name="save_btn">保存</string>
-    <string name="cd_timetable">课程表</string>
     <string name="cd_settings">设置</string>
 
     <!-- Validation Errors -->
@@ -184,7 +177,6 @@
     <string name="widget_tomorrow_format">明天 / %1$s</string>
     <string name="widget_courses_completed">当前课程已上完</string>
     <string name="widget_section_range">第%1$d-%2$d节</string>
-    <string name="go_to_settings">前往设置</string>
 
     <!-- 外观与动效 -->
     <string name="back">返回</string>
@@ -215,9 +207,17 @@
     <string name="widget_settings_summary">预览并自定义桌面小组件</string>
     <string name="language_settings_summary">更改应用界面使用的语言</string>
     <string name="current_time_indicator_summary">在课表中显示当前时间线</string>
-    <string name="show_non_current_week_courses">显示非本周课程</string>
-    <string name="show_non_current_week_courses_summary">以灰色弱化卡片显示本周未开课的课程</string>
     <string name="notification_permission_summary">允许应用发送课程提醒</string>
     <string name="battery_optimization_summary">提高后台定时提醒的可靠性</string>
+    <string name="reminder_reliability">提醒可靠性</string>
+    <string name="exact_alarm">精确闹钟</string>
+    <string name="exact_alarm_summary">允许提醒到点准时触发</string>
+    <string name="discard_changes_title">放弃未保存的更改？</string>
+    <string name="discard">放弃</string>
+    <string name="granted">已开启</string>
+    <string name="not_granted">未开启</string>
+    <string name="keep_editing">继续编辑</string>
+    <string name="widget_pick_image_failed">所选图片加载失败</string>
+    <string name="widget_preview_no_data">暂无课表数据，添加课程后这里会显示真实预览</string>
 
 </resources>
