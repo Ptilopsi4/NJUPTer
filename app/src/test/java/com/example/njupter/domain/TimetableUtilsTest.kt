@@ -33,6 +33,29 @@ class TimetableUtilsTest {
     }
 
     @Test
+    fun `mid-week anchor snaps back to the monday of its own week`() {
+        // 2026-09-02 is a Wednesday; week-1 Monday must be the real 08/31
+        val wednesday = millis(2026, Calendar.SEPTEMBER, 2, 12, 0)
+        val monday = millis(2026, Calendar.AUGUST, 31, 8, 0)
+
+        assertEquals("08/31", getDateForWeekDay(wednesday, week = 1, day = 1))
+        assertEquals("09/02", getDateForWeekDay(wednesday, week = 1, day = 3))
+        assertEquals(0, getWeekIndexForDate(wednesday, totalWeeks = 20, dateMillis = wednesday))
+        assertEquals(0, getWeekIndexForDate(wednesday, totalWeeks = 20, dateMillis = monday))
+    }
+
+    @Test
+    fun `saturday anchor snaps back five days to monday`() {
+        val saturday = millis(2026, Calendar.SEPTEMBER, 5, 23, 0)
+        val monday = millis(2026, Calendar.AUGUST, 31, 0, 0)
+
+        assertEquals("08/31", getDateForWeekDay(saturday, week = 1, day = 1))
+        assertEquals("09/05", getDateForWeekDay(saturday, week = 1, day = 6))
+        assertEquals(0, getWeekIndexForDate(saturday, totalWeeks = 20, dateMillis = saturday))
+        assertEquals(0, getWeekIndexForDate(saturday, totalWeeks = 20, dateMillis = monday))
+    }
+
+    @Test
     fun `notification time uses the same normalized monday anchor`() {
         val sunday = millis(2026, Calendar.AUGUST, 30, 12, 0)
         val classStart = getMillisForWeekDay(

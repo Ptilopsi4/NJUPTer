@@ -114,11 +114,14 @@ fun datePickerMillisToLocalDateMillis(datePickerMillis: Long): Long {
 
 private fun normalizedWeekStart(startDate: Long): Calendar {
     return startOfLocalDay(startDate).apply {
-        // Some school calendars store the semester opening Sunday as the week
-        // start. The timetable itself is Monday-first, so that Sunday must not
-        // be rendered or scheduled as Monday.
-        if (get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
-            add(Calendar.DAY_OF_YEAR, 1)
+        // The timetable grid is Monday-first: the week-1 Monday column must
+        // carry a real Monday, so a mid-week anchor snaps back to the Monday
+        // of its own calendar week. An opening Sunday is kept as the pre-week
+        // day and anchors on the following Monday instead.
+        when (get(Calendar.DAY_OF_WEEK)) {
+            Calendar.SUNDAY -> add(Calendar.DAY_OF_YEAR, 1)
+            Calendar.MONDAY -> Unit
+            else -> add(Calendar.DAY_OF_YEAR, -(get(Calendar.DAY_OF_WEEK) - Calendar.MONDAY))
         }
     }
 }
