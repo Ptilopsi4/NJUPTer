@@ -14,11 +14,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.BatterySaver
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -34,6 +36,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.njupter.R
 import com.example.njupter.ui.settings.component.SettingsSectionCard
+import com.example.njupter.ui.settings.dialog.ReminderLeadDialog
 import com.example.njupter.ui.settings.model.SettingsItem
 import com.example.njupter.ui.settings.model.SettingsSection
 import android.widget.Toast
@@ -54,7 +57,10 @@ fun SettingsScreen(
     onTimetableSettingsClick: () -> Unit,
     onWidgetSettingsClick: () -> Unit,
     onToggleCurrentTimeIndicator: (Boolean) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onExactAlarmsEnabled: () -> Unit = {},
+    reminderLeadMinutes: Int = 10,
+    onReminderLeadMinutesChange: (Int) -> Unit = {}
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -69,12 +75,24 @@ fun SettingsScreen(
             runCatching { isIgnoringBatteryOptimizations(context) }.getOrDefault(false)
         ) 
     }
+    var exactAlarmEnabled by remember {
+        mutableStateOf(
+            runCatching { canScheduleExactAlarms(context) }.getOrDefault(false)
+        )
+    }
+    var showReminderLeadDialog by remember { mutableStateOf(false) }
 
     DisposableEffect(lifecycleOwner, context) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 notificationEnabled = runCatching { isNotificationPermissionGranted(context) }.getOrDefault(true)
                 batteryWhitelistEnabled = runCatching { isIgnoringBatteryOptimizations(context) }.getOrDefault(false)
+                // 精确闹钟刚被授予时，把已排的降级提醒重排为精确闹钟
+                val exactEnabled = runCatching { canScheduleExactAlarms(context) }.getOrDefault(false)
+                if (exactEnabled && !exactAlarmEnabled) {
+                    onExactAlarmsEnabled()
+                }
+                exactAlarmEnabled = exactEnabled
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -135,29 +153,61 @@ fun SettingsScreen(
             checked = enableCurrentTimeIndicator,
             onToggle = { onToggleCurrentTimeIndicator(!enableCurrentTimeIndicator) }
         ),
-        SettingsItem.Toggle(
+        SettingsItem.Navigation(
             icon = SettingsIcon.Vector(Icons.Default.Notifications),
             title = stringResource(R.string.notification_permission),
             description = stringResource(R.string.notification_permission_summary),
-            checked = notificationEnabled,
-            onToggle = {
-                val ok = openNotificationSettings(context)
-                if (!ok) {
+            value = if (notificationEnabled) {
+                stringResource(R.string.granted)
+            } else {
+                stringResource(R.string.not_granted)
+            },
+            onClick = {
+                if (!openNotificationSettings(context)) {
                     Toast.makeText(context, R.string.cannot_open_settings, Toast.LENGTH_SHORT).show()
                 }
             }
         ),
-        SettingsItem.Toggle(
+    )
+
+    // 提醒链路：豁免 + 精确闹钟配合，确保息屏/待机时提醒准时
+    val reminderReliabilityItems = listOf(
+        SettingsItem.Navigation(
             icon = SettingsIcon.Vector(Icons.Default.BatterySaver),
             title = stringResource(R.string.battery_optimization),
             description = stringResource(R.string.battery_optimization_summary),
-            checked = batteryWhitelistEnabled,
-            onToggle = {
-                val ok = openBatteryOptimizationSettings(context)
-                if (!ok) {
+            value = if (batteryWhitelistEnabled) {
+                stringResource(R.string.granted)
+            } else {
+                stringResource(R.string.not_granted)
+            },
+            onClick = {
+                if (!openBatteryOptimizationSettings(context)) {
                     Toast.makeText(context, R.string.cannot_open_settings, Toast.LENGTH_SHORT).show()
                 }
             }
+        ),
+        SettingsItem.Navigation(
+            icon = SettingsIcon.Vector(Icons.Default.Alarm),
+            title = stringResource(R.string.exact_alarm),
+            description = stringResource(R.string.exact_alarm_summary),
+            value = if (exactAlarmEnabled) {
+                stringResource(R.string.granted)
+            } else {
+                stringResource(R.string.not_granted)
+            },
+            onClick = {
+                if (!openExactAlarmSettings(context)) {
+                    Toast.makeText(context, R.string.cannot_open_settings, Toast.LENGTH_SHORT).show()
+                }
+            }
+        ),
+        SettingsItem.Navigation(
+            icon = SettingsIcon.Vector(Icons.Default.Timer),
+            title = stringResource(R.string.reminder_lead_time),
+            description = stringResource(R.string.reminder_lead_time_summary),
+            value = stringResource(R.string.reminder_lead_min_value, reminderLeadMinutes),
+            onClick = { showReminderLeadDialog = true }
         )
     )
 
@@ -169,6 +219,10 @@ fun SettingsScreen(
         SettingsSection(
             title = stringResource(R.string.app_settings),
             items = appSectionItems     // 条目定义
+        ),
+        SettingsSection(
+            title = stringResource(R.string.reminder_reliability),
+            items = reminderReliabilityItems
         )
     )
 
@@ -214,6 +268,17 @@ fun SettingsScreen(
             }
         }
     }
+
+    if (showReminderLeadDialog) {
+        ReminderLeadDialog(
+            initialMinutes = reminderLeadMinutes,
+            onDismiss = { showReminderLeadDialog = false },
+            onConfirm = { minutes ->
+                showReminderLeadDialog = false
+                onReminderLeadMinutesChange(minutes)
+            }
+        )
+    }
 }
 
 private fun isNotificationPermissionGranted(context: android.content.Context): Boolean {
@@ -228,6 +293,16 @@ private fun isIgnoringBatteryOptimizations(context: android.content.Context): Bo
     return try {
         val powerManager = context.getSystemService(android.content.Context.POWER_SERVICE) as? PowerManager
         powerManager?.isIgnoringBatteryOptimizations(context.packageName) ?: false
+    } catch (e: Exception) {
+        false
+    }
+}
+
+private fun canScheduleExactAlarms(context: android.content.Context): Boolean {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return true
+    return try {
+        val alarmManager = context.getSystemService(android.content.Context.ALARM_SERVICE) as? android.app.AlarmManager
+        alarmManager?.canScheduleExactAlarms() ?: false
     } catch (e: Exception) {
         false
     }
@@ -256,22 +331,48 @@ private fun openBatteryOptimizationSettings(context: android.content.Context): B
     return startActivitySafely(context, finalFallbackIntent)
 }
 
+private fun openExactAlarmSettings(context: android.content.Context): Boolean {
+    val requestIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+            data = Uri.parse("package:${context.packageName}")
+        }
+    } else {
+        null
+    }
+    val fallbackIntent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+        data = Uri.parse("package:${context.packageName}")
+    }
+    if (requestIntent == null) {
+        return startActivitySafely(context, fallbackIntent)
+    }
+    return startActivitySafely(context, requestIntent, fallbackIntent)
+}
+
+/**
+ * 依次尝试候选 intent，任一成功即返回。
+ * 不用 resolveActivity 预判：API 30+ 没有 <queries> 声明时对系统页
+ * resolveActivity 会返回 null，预判会造成误报失败。
+ */
 private fun startActivitySafely(
     context: android.content.Context,
     primaryIntent: Intent,
     secondaryIntent: Intent? = null
 ): Boolean {
-    return try {
-        val launchIntent = when {
-            primaryIntent.resolveActivity(context.packageManager) != null -> primaryIntent
-            secondaryIntent != null && secondaryIntent.resolveActivity(context.packageManager) != null -> secondaryIntent
-            else -> return false
+    val candidates = listOfNotNull(primaryIntent, secondaryIntent)
+    for (intent in candidates) {
+        try {
+            context.startActivity(intent)
+            return true
+        } catch (e: Exception) {
+            android.util.Log.e(
+                "SettingsScreen",
+                "startActivity failed action=${intent.action} data=${intent.data}",
+                e
+            )
+            // 尝试下一个候选
         }
-        context.startActivity(launchIntent)
-        true
-    } catch (_: Exception) {
-        false
     }
+    return false
 }
 
 @Preview(showBackground = true)

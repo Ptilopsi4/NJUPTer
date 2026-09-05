@@ -18,6 +18,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.lifecycleScope
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,6 +62,7 @@ import com.example.njupter.widget.WidgetDataManager
 import com.example.njupter.widget.WidgetUpdateScheduler
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.debounce
 import java.util.Locale
 
 /**
@@ -115,7 +117,7 @@ class MainActivity : ComponentActivity() {
         val dataSource = LocalFileDataSource(this)
         val settingsRepository = SharedPreferencesSettingsRepository(this)
         val repository = FileTimetableRepository(dataSource, settingsRepository)    // 实例化TimetableRepository，传入MainActivity的Context来读取assets下的JSON
-        val reminderScheduler = CourseReminderScheduler(this)
+        val reminderScheduler = CourseReminderScheduler(this, settingsRepository)
 
         lifecycleScope.launch {
             ReminderBootstrapper.rescheduleCurrentTimetable(applicationContext)
@@ -149,6 +151,9 @@ class MainActivity : ComponentActivity() {
                 .collectAsState(initial = settingsRepository.peekPredictiveBackExitDirection())
             val courseColorTone by settingsRepository.getCourseColorTone().collectAsState(
                 initial = settingsRepository.peekCourseColorTone()
+            )
+            val reminderLeadMinutes by settingsRepository.getReminderLeadMinutes().collectAsState(
+                initial = settingsRepository.peekReminderLeadMinutes()
             )
 
             NJUPTerTheme(
@@ -193,11 +198,11 @@ class MainActivity : ComponentActivity() {
                     importState.result?.let { result ->
                         ImportPreviewDialog(
                             importResult = result,
-                            onConfirm = { name, startDate ->
+                            onConfirm = { name, startDate, totalWeeks ->
                                 viewModel.createAndImportTimetable(
                                     name = name,
                                     startDate = startDate,
-                                    totalWeeks = 20,
+                                    totalWeeks = totalWeeks,
                                     showWeekends = true,
                                     sessionTimes = defaultSessionTimes,
                                     newCourses = result.newCourses,
@@ -225,24 +230,27 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                // Reschedule reminders when timetable identity changes.
-                // courseInfos and sessions are NOT keys — the repository emits them
-                // on every mutation, which would reschedule N times per import/add.
-                // ReminderScheduler reads current repo state when it fires, so we only
-                // need to trigger on structural changes.
+                // Reschedule reminders whenever timetable data settles.
+                // snapshotFlow + debounce 合并连续变更（如导入 N 门课只重排一次），
+                // 同时保证课程开关/名称/教室等编辑后立即同步到已排闹钟。
                 // 无课表时同样要调用：scheduleUpcomingReminders 先 clearAll 再对 null id 早退，
                 // 跳过调用会让已删除课表的提醒留在系统里继续触发。
-                val reminderKey = uiState.isLoading to uiState.currentTimetableId
-                LaunchedEffect(reminderKey) {
+                LaunchedEffect(uiState.isLoading) {
                     if (!uiState.isLoading) {
-                        reminderScheduler.scheduleUpcomingReminders(
-                            courseInfos = uiState.courseInfos,
-                            sessions = uiState.sessions,
-                            currentTimetableId = uiState.currentTimetableId,
-                            startDate = uiState.currentStartDate,
-                            totalWeeks = uiState.currentTotalWeeks,
-                            sessionTimes = uiState.currentSessionTimes
-                        )
+                        snapshotFlow {
+                            uiState.currentTimetableId to (uiState.courseInfos to uiState.sessions)
+                        }
+                            .debounce(500)
+                            .collect {
+                                reminderScheduler.scheduleUpcomingReminders(
+                                    courseInfos = uiState.courseInfos,
+                                    sessions = uiState.sessions,
+                                    currentTimetableId = uiState.currentTimetableId,
+                                    startDate = uiState.currentStartDate,
+                                    totalWeeks = uiState.currentTotalWeeks,
+                                    sessionTimes = uiState.currentSessionTimes
+                                )
+                            }
                     }
                 }
 
@@ -416,6 +424,34 @@ class MainActivity : ComponentActivity() {
                                                     onToggleCurrentTimeIndicator = { enabled ->
                                                         scope.launch {
                                                             settingsRepository.setEnableCurrentTimeIndicator(enabled)
+                                                        }
+                                                    },
+                                                    onExactAlarmsEnabled = {
+                                                        // 精确闹钟刚被授予：把替换已排的非精确提醒为精确闹钟
+                                                        scope.launch {
+                                                            reminderScheduler.scheduleUpcomingReminders(
+                                                                courseInfos = uiState.courseInfos,
+                                                                sessions = uiState.sessions,
+                                                                currentTimetableId = uiState.currentTimetableId,
+                                                                startDate = uiState.currentStartDate,
+                                                                totalWeeks = uiState.currentTotalWeeks,
+                                                                sessionTimes = uiState.currentSessionTimes
+                                                            )
+                                                        }
+                                                    },
+                                                    reminderLeadMinutes = reminderLeadMinutes,
+                                                    onReminderLeadMinutesChange = { minutes ->
+                                                        // 提前时间已变：保存后重排已排闹钟
+                                                        scope.launch {
+                                                            settingsRepository.setReminderLeadMinutes(minutes)
+                                                            reminderScheduler.scheduleUpcomingReminders(
+                                                                courseInfos = uiState.courseInfos,
+                                                                sessions = uiState.sessions,
+                                                                currentTimetableId = uiState.currentTimetableId,
+                                                                startDate = uiState.currentStartDate,
+                                                                totalWeeks = uiState.currentTotalWeeks,
+                                                                sessionTimes = uiState.currentSessionTimes
+                                                            )
                                                         }
                                                     },
                                                     onBack = { currentTab = 0 }
