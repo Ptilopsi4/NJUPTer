@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -52,11 +53,13 @@ fun SettingsScreen(
     currentLanguageTag: String,
     currentThemeMode: AppThemeMode,
     enableCurrentTimeIndicator: Boolean,
+    hideFromRecents: Boolean = false,
     onThemeSettingsClick: () -> Unit,
     onLanguageSelectClick: () -> Unit,
     onTimetableSettingsClick: () -> Unit,
     onWidgetSettingsClick: () -> Unit,
     onToggleCurrentTimeIndicator: (Boolean) -> Unit,
+    onToggleHideFromRecents: (Boolean) -> Unit = {},
     onBack: () -> Unit,
     onExactAlarmsEnabled: () -> Unit = {},
     reminderLeadMinutes: Int = 10,
@@ -153,6 +156,13 @@ fun SettingsScreen(
             checked = enableCurrentTimeIndicator,
             onToggle = { onToggleCurrentTimeIndicator(!enableCurrentTimeIndicator) }
         ),
+        SettingsItem.Toggle(
+            icon = SettingsIcon.Vector(Icons.Default.VisibilityOff),
+            title = stringResource(R.string.hide_from_recents),
+            description = stringResource(R.string.hide_from_recents_summary),
+            checked = hideFromRecents,
+            onToggle = { onToggleHideFromRecents(!hideFromRecents) }
+        ),
         SettingsItem.Navigation(
             icon = SettingsIcon.Vector(Icons.Default.Notifications),
             title = stringResource(R.string.notification_permission),
@@ -183,6 +193,16 @@ fun SettingsScreen(
             },
             onClick = {
                 if (!openBatteryOptimizationSettings(context)) {
+                    Toast.makeText(context, R.string.cannot_open_settings, Toast.LENGTH_SHORT).show()
+                }
+            }
+        ),
+        SettingsItem.Navigation(
+            icon = SettingsIcon.Vector(Icons.Default.BatterySaver),
+            title = stringResource(R.string.background_high_power),
+            description = stringResource(R.string.background_high_power_summary),
+            onClick = {
+                if (!openBackgroundHighPowerSettings(context)) {
                     Toast.makeText(context, R.string.cannot_open_settings, Toast.LENGTH_SHORT).show()
                 }
             }
@@ -329,6 +349,26 @@ private fun openBatteryOptimizationSettings(context: android.content.Context): B
 
     if (startActivitySafely(context, requestIntent, fallbackIntent)) return true
     return startActivitySafely(context, finalFallbackIntent)
+}
+
+/**
+ * 厂商"后台高耗电/后台运行"页没有公开 API，只能跳转。
+ * 组件名随 ROM 版本变化，逐个尝试，失败最终降级到应用详情页由用户手动进入。
+ */
+private fun openBackgroundHighPowerSettings(context: android.content.Context): Boolean {
+    val vendorTargets = listOf(
+        "com.vivo.abe" to "com.vivo.abe.ExcludedPowerDetailActivity",
+        "com.coloros.batterycomponent" to "com.coloros.batterycomponent.ui.BatteryActivity",
+        "com.miui.powerkeeper" to "com.miui.powerkeeper.ui.HiddenAppsConfigActivity",
+        "com.huawei.systemmanager" to "com.huawei.systemmanager.startupmgr.ui.StartupNormalAppListActivity"
+    )
+    for ((pkg, cls) in vendorTargets) {
+        if (startActivitySafely(context, Intent().setClassName(pkg, cls))) return true
+    }
+    val fallbackIntent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+        data = Uri.parse("package:${context.packageName}")
+    }
+    return startActivitySafely(context, fallbackIntent)
 }
 
 private fun openExactAlarmSettings(context: android.content.Context): Boolean {

@@ -156,6 +156,7 @@
     <string name="course_reminder_toggle_summary">Notify before this course starts</string>
     <string name="notification_permission">Notification Permission</string>
     <string name="battery_optimization">Battery Optimization</string>
+    <string name="background_high_power">Background High Power</string>
     <string name="current_time_indicator">Current Time Indicator</string>
     <string name="cannot_open_settings">Unable to open settings</string>
     <string name="language">Language</string>
@@ -210,6 +211,9 @@
     <string name="current_time_indicator_summary">Show the current time line on the timetable</string>
     <string name="notification_permission_summary">Allow course reminder notifications</string>
     <string name="battery_optimization_summary">Keep scheduled reminders reliable in the background</string>
+    <string name="background_high_power_summary">Allow background power use on some devices so reminders fire on time</string>
+    <string name="hide_from_recents">Hide after exit</string>
+    <string name="hide_from_recents_summary">Remove the app from Recents when leaving; reopen from the home screen</string>
     <string name="reminder_reliability">Reminder reliability</string>
     <string name="exact_alarm">Exact alarms</string>
     <string name="exact_alarm_summary">Allow reminders to trigger exactly on time</string>

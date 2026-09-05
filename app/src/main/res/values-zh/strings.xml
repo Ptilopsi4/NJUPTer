@@ -155,6 +155,7 @@
     <string name="course_reminder_toggle_summary">上课前通知该课程</string>
     <string name="notification_permission">通知权限</string>
     <string name="battery_optimization">电池优化</string>
+    <string name="background_high_power">后台高耗电</string>
     <string name="current_time_indicator">当前时间指示器</string>
     <string name="cannot_open_settings">无法打开系统设置</string>
     <string name="language">语言</string>
@@ -209,6 +210,9 @@
     <string name="current_time_indicator_summary">在课表中显示当前时间线</string>
     <string name="notification_permission_summary">允许应用发送课程提醒</string>
     <string name="battery_optimization_summary">提高后台定时提醒的可靠性</string>
+    <string name="background_high_power_summary">部分机型需在系统设置中允许后台高耗电，提醒才能准时触发</string>
+    <string name="hide_from_recents">退出后隐藏</string>
+    <string name="hide_from_recents_summary">退出后不在最近任务中显示，仅能从桌面图标进入</string>
     <string name="reminder_reliability">提醒可靠性</string>
     <string name="exact_alarm">精确闹钟</string>
     <string name="exact_alarm_summary">允许提醒到点准时触发</string>

@@ -1,6 +1,8 @@
 package com.example.njupter
 
 import android.Manifest
+import android.app.ActivityManager
+import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Build
@@ -166,6 +168,14 @@ class MainActivity : ComponentActivity() {
             val reminderLeadMinutes by settingsRepository.getReminderLeadMinutes().collectAsState(
                 initial = settingsRepository.peekReminderLeadMinutes()
             )
+            val hideFromRecents by settingsRepository.getHideFromRecents().collectAsState(
+                initial = settingsRepository.peekHideFromRecents()
+            )
+
+            // excludeFromRecents 是 task 级属性，开关变化时立即应用到当前 task
+            LaunchedEffect(hideFromRecents) {
+                applyHideFromRecents(hideFromRecents)
+            }
 
             NJUPTerTheme(
                 themeMode = appThemeMode,
@@ -442,6 +452,7 @@ class MainActivity : ComponentActivity() {
                                                     currentLanguageTag = appLanguageTag,
                                                     currentThemeMode = appThemeMode,
                                                     enableCurrentTimeIndicator = enableCurrentTimeIndicator,
+                                                    hideFromRecents = hideFromRecents,
                                                     onThemeSettingsClick = { settingsSubPage = "theme" },
                                                     onLanguageSelectClick = { settingsSubPage = "language" },
                                                     onTimetableSettingsClick = { settingsSubPage = "timetable" },
@@ -449,6 +460,11 @@ class MainActivity : ComponentActivity() {
                                                     onToggleCurrentTimeIndicator = { enabled ->
                                                         scope.launch {
                                                             settingsRepository.setEnableCurrentTimeIndicator(enabled)
+                                                        }
+                                                    },
+                                                    onToggleHideFromRecents = { enabled ->
+                                                        scope.launch {
+                                                            settingsRepository.setHideFromRecents(enabled)
                                                         }
                                                     },
                                                     onExactAlarmsEnabled = {
@@ -493,6 +509,16 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    /**
+     * API 29+ 才有动态开关（AppTask.setExcludeFromRecents）；更低版本只能靠
+     * manifest 静态声明，无法运行时切换，忽略。
+     */
+    private fun applyHideFromRecents(hide: Boolean) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
+        val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager ?: return
+        activityManager.appTasks.firstOrNull()?.setExcludeFromRecents(hide)
     }
 
     override fun onRequestPermissionsResult(
