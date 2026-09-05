@@ -17,3 +17,7 @@ local.properties
 .claude
 CLAUDE.md
 tmp/
+keystore.properties
+*.jks
+*.keystore
+*.pk8
