@@ -178,6 +178,18 @@
     <string name="widget_tomorrow_format">Tomorrow / %1$s</string>
     <string name="widget_courses_completed">Today\'s courses are complete</string>
     <string name="widget_section_range">Sec %1$d-%2$d</string>
+    <string name="widget_more_courses">+%1$d more</string>
+    <string name="widget_instances">Widget instances</string>
+    <string name="widget_mode_solid">Solid</string>
+    <string name="widget_mode_image">Image</string>
+    <string name="widget_solid_color">Solid color</string>
+    <string name="widget_solid_follow_theme">Follow theme</string>
+    <string name="widget_pin_to_home">Add to Home Screen</string>
+    <string name="widget_pin_failed">Could not start the add request</string>
+    <string name="widget_pinned">Widget added to Home Screen</string>
+    <string name="widget_pin_guide_hint">Requested the system add dialog. If it did not appear, add manually:</string>
+    <string name="widget_pin_guide_steps">1. Long-press an empty area on the Home screen\n2. Choose “Widgets”\n3. Find NJUPTer and drag it to the Home screen</string>
+    <string name="widget_bg_edit_hint">Drag or pinch to adjust the background</string>
 
     <!-- Appearance and motion -->
     <string name="back">Back</string>

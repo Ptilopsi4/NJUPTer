@@ -178,6 +178,18 @@
     <string name="widget_tomorrow_format">明天 / %1$s</string>
     <string name="widget_courses_completed">当前课程已上完</string>
     <string name="widget_section_range">第%1$d-%2$d节</string>
+    <string name="widget_more_courses">还有 %1$d 节</string>
+    <string name="widget_instances">小组件实例</string>
+    <string name="widget_mode_solid">纯色</string>
+    <string name="widget_mode_image">图片</string>
+    <string name="widget_solid_color">纯色颜色</string>
+    <string name="widget_solid_follow_theme">跟随主题</string>
+    <string name="widget_pin_to_home">添加到桌面</string>
+    <string name="widget_pin_failed">发起添加请求失败</string>
+    <string name="widget_pinned">小组件已添加到桌面</string>
+    <string name="widget_pin_guide_hint">已尝试发起系统添加请求。若未弹出系统确认窗口，请手动添加：</string>
+    <string name="widget_pin_guide_steps">1. 长按桌面空白处\n2. 选择「小组件」或「原子组件」\n3. 找到 NJUPTer，拖动到桌面即可</string>
+    <string name="widget_bg_edit_hint">拖动或双指缩放，调整背景位置和大小</string>
 
     <!-- 外观与动效 -->
     <string name="back">返回</string>

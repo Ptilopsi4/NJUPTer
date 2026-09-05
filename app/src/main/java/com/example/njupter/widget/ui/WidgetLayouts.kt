@@ -1,5 +1,6 @@
 package com.example.njupter.widget.ui
 
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.runtime.Composable
@@ -13,6 +14,8 @@ import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
 import androidx.glance.LocalSize
 import androidx.glance.appwidget.cornerRadius
+import androidx.glance.appwidget.lazy.LazyColumn
+import androidx.glance.appwidget.lazy.items
 import androidx.glance.background
 import androidx.glance.color.ColorProviders
 import androidx.glance.layout.Alignment
@@ -31,42 +34,56 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
+import androidx.glance.unit.ColorProvider
 import com.example.njupter.R
 import com.example.njupter.widget.WidgetCourseEntry
 
 @Composable
 fun CoursesWidgetContent(
     entries: List<WidgetCourseEntry>,
+    showBackgroundImage: Boolean,
     backgroundImagePath: String?,
     transparency: Int,
+    solidColorArgb: Int?,
+    solidAlpha: Int,
     colors: ColorProviders,
     headerTitle: String,
     weekLabel: String,
     emptyText: String,
     sectionLabel: (Int, Int) -> String
 ) {
-    val size = LocalSize.current
-    val courseColors = WidgetLightColors
-    val maxCourses = when {
-        size.height < 150.dp -> 1
-        size.height < 210.dp -> 2
-        size.height < 270.dp -> 3
-        else -> 4
-    }
-    val overlayAlpha = transparency.coerceIn(0, 255)
     val context = LocalContext.current
+    // 课程色条与 app 主界面一致：暗色模式用深色板
+    val isDark = (context.resources.configuration.uiMode and
+            Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+    val courseColors = if (isDark) WidgetDarkColors else WidgetLightColors
+    val size = LocalSize.current
+    val overlayAlpha = transparency.coerceIn(0, 255)
     val density = context.resources.displayMetrics.density
     // 解码目标像素尺寸按 widget 实际大小估算，避免每次渲染全尺寸解码大图
     val targetPx = (maxOf(size.width.value, size.height.value) * density).toInt().coerceAtLeast(1)
-    val backgroundBitmap = backgroundImagePath?.let { path ->
-        decodeSampled(path, targetPx)
+    val backgroundBitmap = if (showBackgroundImage) {
+        backgroundImagePath?.let { path -> decodeSampled(path, targetPx) }
+    } else {
+        null
     }
 
     WidgetTheme(colors = colors) {
         Box(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .background(GlanceTheme.colors.widgetBackground)
+                .background(
+                    solidColorArgb?.let { argb ->
+                        ColorProvider(
+                            Color(
+                                red = (argb shr 16) and 0xFF,
+                                green = (argb shr 8) and 0xFF,
+                                blue = argb and 0xFF,
+                                alpha = solidAlpha.coerceIn(0, 255)
+                            )
+                        )
+                    } ?: GlanceTheme.colors.widgetBackground
+                )
                 .cornerRadius(16.dp)
         ) {
             if (backgroundBitmap != null) {
@@ -101,18 +118,23 @@ fun CoursesWidgetContent(
                 if (entries.isEmpty()) {
                     EmptyWidgetContent(emptyText)
                 } else {
-                    entries.take(maxCourses).forEachIndexed { index, entry ->
-                        CourseRow(
-                            entry = entry,
-                            courseColor = getColorForIndex(
-                                entry.name,
-                                entry.colorIndex,
-                                courseColors
-                            ),
-                            sectionText = sectionLabel(entry.startSection, entry.endSection)
-                        )
-                        if (index != minOf(entries.lastIndex, maxCourses - 1)) {
-                            Spacer(modifier = GlanceModifier.height(6.dp))
+                    // ListView 承载全部课程，超出高度可滚动，不再按高度截断
+                    LazyColumn(
+                        modifier = GlanceModifier
+                            .fillMaxWidth()
+                            .defaultWeight()
+                    ) {
+                        items(entries) { entry ->
+                            CourseRow(
+                                entry = entry,
+                                courseColor = getColorForIndex(
+                                    entry.name,
+                                    entry.colorIndex,
+                                    courseColors
+                                ),
+                                sectionText = sectionLabel(entry.startSection, entry.endSection),
+                                modifier = GlanceModifier.padding(bottom = 6.dp)
+                            )
                         }
                     }
                 }
@@ -217,7 +239,8 @@ private fun EmptyWidgetContent(text: String) {
 private fun CourseRow(
     entry: WidgetCourseEntry,
     courseColor: Color,
-    sectionText: String
+    sectionText: String,
+    modifier: GlanceModifier = GlanceModifier
 ) {
     val (startTime, endTime) = splitTimes(entry.timeText)
     val metadata = buildList {
@@ -227,7 +250,7 @@ private fun CourseRow(
     }.joinToString(" | ")
 
     Row(
-        modifier = GlanceModifier
+        modifier = modifier
             .fillMaxWidth()
             .height(52.dp)
             .background(GlanceTheme.colors.surfaceVariant)

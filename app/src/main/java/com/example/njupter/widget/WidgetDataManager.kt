@@ -42,6 +42,24 @@ object WidgetDataManager {
     }
 
     /**
+     * 首次添加小组件但 app 尚未启动过时，缓存为空，provideGlance 只能拿到默认状态。
+     * 这里在缓存缺失时现算一次并续排闹钟，避免表头错星期、且无人调度刷新。
+     */
+    suspend fun ensureWidgetState(context: Context): WidgetDisplayState = withContext(Dispatchers.IO) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        if (prefs.contains(KEY_DISPLAY_STATE)) {
+            loadWidgetState(context)
+        } else {
+            val state = WidgetModels.computeWidgetDisplayState(context)
+            saveWidgetState(context, state)
+            state.nextRefreshAtMillis?.let {
+                WidgetUpdateScheduler.scheduleRefresh(context, it)
+            }
+            state
+        }
+    }
+
+    /**
      * 重算 widget 状态并按需刷新。
      * 计算/读盘部分下沉到 IO 线程（调用方可能在主线程）；
      * 可视内容（课程/星期/周数等）未变时只补写 nextRefresh 时间戳，不重组 Glance。
