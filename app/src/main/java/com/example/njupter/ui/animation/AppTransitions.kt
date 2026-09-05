@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -398,6 +399,7 @@ private fun <T> RetainedLayerHost(
                         .fillMaxSize()
                         .zIndex(zIndex)
                         .then(if (isActive) Modifier else Modifier.clearAndSetSemantics { })
+                        .then(if (isActive || isPredictiveBackground) Modifier else Modifier.invisibleLayerStopsHits())
                         .motionLayer(
                             normalAlpha = { alpha.value },
                             normalTranslation = { translation.value },
@@ -474,6 +476,18 @@ private fun <T> layerScale(
         else -> 1f
     }
     else -> 1f
+}
+
+/**
+ * 保留层在 alpha=0 时仍参与命中测试（graphicsLayer 不影响 hit test），
+ * 不加拦截会让点击穿透到不可见的残留路由层（幽灵点击）。
+ */
+private fun Modifier.invisibleLayerStopsHits(): Modifier = pointerInput(Unit) {
+    awaitPointerEventScope {
+        while (true) {
+            awaitPointerEvent().changes.forEach { it.consume() }
+        }
+    }
 }
 
 private fun Modifier.motionLayer(
