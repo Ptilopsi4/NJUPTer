@@ -45,7 +45,6 @@ fun CourseCard(
     course: CourseInfo,
     classroom: String,
     colorsList: List<Color>,
-    isActiveInCurrentWeek: Boolean = true,
     autoColorIndex: Int? = null,
     textMeasurer: TextMeasurer,
     onClick: () -> Unit,
@@ -68,15 +67,10 @@ fun CourseCard(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val backgroundColor = when {
-        !isActiveInCurrentWeek -> MaterialTheme.colorScheme.surfaceVariant
         isPressed -> activeBackgroundColor.copy(alpha = 0.72f)
         else -> activeBackgroundColor
     }
-    val contentColor = if (isActiveInCurrentWeek) {
-        MaterialTheme.colorScheme.onSurface
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.58f)
-    }
+    val contentColor = MaterialTheme.colorScheme.onSurface
 
     // 组合期构建 style：drawWithCache 闭包里没有 CompositionLocal 可读
     val nameStyle = MaterialTheme.typography.bodySmall.copy(

@@ -12,8 +12,13 @@ class TimetableTimeIndicatorTest {
     )
 
     @Test
-    fun `before classes indicator rests on first start line`() {
-        assertEquals(0 to 0f, findCurrentSectionPosition(times, 7 * 60))
+    fun `before classes indicator is hidden`() {
+        assertNull(findCurrentSectionPosition(times, 7 * 60))
+    }
+
+    @Test
+    fun `at day start indicator rests on first start line`() {
+        assertEquals(0 to 0f, findCurrentSectionPosition(times, 8 * 60))
     }
 
     @Test
@@ -27,8 +32,8 @@ class TimetableTimeIndicatorTest {
     }
 
     @Test
-    fun `after all classes indicator stays on final end line`() {
-        assertEquals(2 to 1f, findCurrentSectionPosition(times, 12 * 60))
+    fun `after all classes indicator is hidden`() {
+        assertNull(findCurrentSectionPosition(times, 12 * 60))
     }
 
     @Test

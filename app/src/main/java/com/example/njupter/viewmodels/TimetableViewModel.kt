@@ -38,7 +38,6 @@ data class TimetableUiState(
     val currentTotalWeeks: Int = 20,
     val currentWeek: Int = 1,
     val showWeekends: Boolean = false,
-    val showNonCurrentWeekCourses: Boolean = false,
     val currentSessionTimes: List<String> = emptyList(),
     val canUndo: Boolean = false,
     
@@ -118,7 +117,6 @@ class TimetableViewModel(
         val safeStartDate = if (bundle.currentMeta?.startDate != null && bundle.currentMeta.startDate > 0) bundle.currentMeta.startDate else System.currentTimeMillis()
         val safeSessionTimes = bundle.currentMeta?.nonNullSessionTimes ?: TimetableMetadata("", "", 0).nonNullSessionTimes
         val safeShowWeekends = bundle.currentMeta?.showWeekends ?: true
-        val safeShowNonCurrentWeekCourses = bundle.currentMeta?.showNonCurrentWeekCourses ?: false
 
         TimetableUiState(
             courseInfos = bundle.courses,
@@ -131,7 +129,6 @@ class TimetableViewModel(
             currentTotalWeeks = safeTotalWeeks,
             currentWeek = bundle.currentWeek.coerceIn(1, safeTotalWeeks),
             showWeekends = safeShowWeekends,
-            showNonCurrentWeekCourses = safeShowNonCurrentWeekCourses,
             currentSessionTimes = safeSessionTimes,
             canUndo = bundle.canUndo
         )
@@ -193,9 +190,9 @@ class TimetableViewModel(
         }
     }
 
-    fun updateTimetableMetadata(id: String, name: String, startDate: Long, totalWeeks: Int, showWeekends: Boolean, showNonCurrentWeekCourses: Boolean, sessionTimes: List<String>) {
+    fun updateTimetableMetadata(id: String, name: String, startDate: Long, totalWeeks: Int, showWeekends: Boolean, sessionTimes: List<String>) {
         viewModelScope.launch {
-            repository.updateTimetableMetadata(id, name, startDate, totalWeeks, showWeekends, showNonCurrentWeekCourses, sessionTimes)
+            repository.updateTimetableMetadata(id, name, startDate, totalWeeks, showWeekends, sessionTimes)
             appContext?.let { onWidgetRefresh(it) }
         }
     }

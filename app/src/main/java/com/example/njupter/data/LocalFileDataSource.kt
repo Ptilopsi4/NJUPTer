@@ -74,7 +74,7 @@ class LocalFileDataSource(private val context: Context) : TimetableDataSource {
         return@withContext meta
     }
 
-    override suspend fun updateTimetableMetadata(id: String, name: String, startDate: Long, totalWeeks: Int, showWeekends: Boolean, showNonCurrentWeekCourses: Boolean, sessionTimes: List<String>) = withContext(Dispatchers.IO) {
+    override suspend fun updateTimetableMetadata(id: String, name: String, startDate: Long, totalWeeks: Int, showWeekends: Boolean, sessionTimes: List<String>) = withContext(Dispatchers.IO) {
         val currentList = getAllTimetables().toMutableList()
         val index = currentList.indexOfFirst { it.id == id }
         if (index != -1) {
@@ -85,7 +85,6 @@ class LocalFileDataSource(private val context: Context) : TimetableDataSource {
                 totalWeeks = totalWeeks,
                 sessionTimes = sessionTimes,
                 showWeekends = showWeekends,
-                showNonCurrentWeekCourses = showNonCurrentWeekCourses,
                 lastModified = System.currentTimeMillis()
             )
             saveIndex(currentList)

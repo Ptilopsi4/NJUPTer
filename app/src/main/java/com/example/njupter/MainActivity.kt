@@ -306,7 +306,6 @@ class MainActivity : ComponentActivity() {
                                                     currentWeek = uiState.currentWeek,
                                                     sessionTimes = uiState.currentSessionTimes,
                                                     showWeekends = uiState.showWeekends,
-                                                    showNonCurrentWeekCourses = uiState.showNonCurrentWeekCourses,
                                                     enableCurrentTimeIndicator = enableCurrentTimeIndicator,
                                                     isLoading = uiState.isLoading,
                                                     courseColorTone = courseColorTone,
@@ -382,10 +381,9 @@ class MainActivity : ComponentActivity() {
                                                     currentStartDate = uiState.currentStartDate,
                                                     currentTotalWeeks = uiState.currentTotalWeeks,
                                                     currentShowWeekends = uiState.showWeekends,
-                                                    currentShowNonCurrentWeekCourses = uiState.showNonCurrentWeekCourses,
                                                     currentSessionTimes = uiState.currentSessionTimes,
                                                     onBack = { settingsSubPage = "main" },
-                                                    onSave = { name, startDate, weeks, showWeekends, showNonCurrentWeekCourses, sessionTimes ->
+                                                    onSave = { name, startDate, weeks, showWeekends, sessionTimes ->
                                                         uiState.currentTimetableId?.let { timetableId ->
                                                             viewModel.updateTimetableMetadata(
                                                                 timetableId,
@@ -393,7 +391,6 @@ class MainActivity : ComponentActivity() {
                                                                 startDate,
                                                                 weeks,
                                                                 showWeekends,
-                                                                showNonCurrentWeekCourses,
                                                                 sessionTimes
                                                             )
                                                         }

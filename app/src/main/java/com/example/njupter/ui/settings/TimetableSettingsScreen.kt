@@ -7,21 +7,24 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding  
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.activity.compose.BackHandler
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.TableRows
 import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -50,22 +53,49 @@ fun TimetableSettingsScreen(
     currentStartDate: Long,
     currentTotalWeeks: Int,
     currentShowWeekends: Boolean,
-    currentShowNonCurrentWeekCourses: Boolean,
     currentSessionTimes: List<String>,
     onBack: () -> Unit,
-    onSave: (String, Long, Int, Boolean, Boolean, List<String>) -> Unit
+    onSave: (String, Long, Int, Boolean, List<String>) -> Unit
 ) {
     var name by remember(currentTimetableName) { mutableStateOf(currentTimetableName) }
     var startDate by remember(currentStartDate) { mutableStateOf(currentStartDate) }
     var totalWeeks by remember(currentTotalWeeks) { mutableFloatStateOf(currentTotalWeeks.toFloat()) }
     var showWeekends by remember(currentShowWeekends) { mutableStateOf(currentShowWeekends) }
-    var showNonCurrentWeekCourses by remember(currentShowNonCurrentWeekCourses) {
-        mutableStateOf(currentShowNonCurrentWeekCourses)
-    }
     var sessionTimes by remember(currentSessionTimes) { mutableStateOf(currentSessionTimes) }
+
+    val isDirty = name.trim() != currentTimetableName.trim() ||
+        startDate != currentStartDate ||
+        totalWeeks.toInt() != currentTotalWeeks ||
+        showWeekends != currentShowWeekends ||
+        sessionTimes != currentSessionTimes
 
     var showDatePicker by remember { mutableStateOf(false) }
     var showSessionTimeEditor by remember { mutableStateOf(false) }
+    var showDiscardDialog by remember { mutableStateOf(false) }
+
+    fun requestBack() {
+        if (isDirty) showDiscardDialog = true else onBack()
+    }
+
+    // 系统返回手势/返回键在未保存时先弹确认，避免改动被 PredictiveBackSurface 静默丢弃
+    BackHandler(enabled = isDirty) { requestBack() }
+
+    if (showDiscardDialog) {
+        AlertDialog(
+            onDismissRequest = { showDiscardDialog = false },
+            title = { Text(stringResource(R.string.discard_changes_title)) },
+            confirmButton = {
+                TextButton(onClick = onBack) {
+                    Text(stringResource(R.string.discard))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDiscardDialog = false }) {
+                    Text(stringResource(R.string.keep_editing))
+                }
+            }
+        )
+    }
 
     if (showDatePicker) {
         StartDateDialog(
@@ -93,8 +123,8 @@ fun TimetableSettingsScreen(
         TopAppBar(
             title = { Text(stringResource(R.string.cur_timetable_settings)) },
             navigationIcon = {
-                TextButton(onClick = onBack) {
-                    androidx.compose.material3.Icon(
+                IconButton(onClick = { requestBack() }) {
+                    Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = stringResource(R.string.cd_back)
                     )
@@ -108,19 +138,15 @@ fun TimetableSettingsScreen(
                             startDate,
                             totalWeeks.toInt(),
                             showWeekends,
-                            showNonCurrentWeekCourses,
                             sessionTimes
                         )
                         onBack()
                     },
-                    enabled = name.isNotBlank()
+                    enabled = name.isNotBlank() && isDirty
                 ) {
                     Text(stringResource(R.string.save_btn))
                 }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = TopAppBarDefaults.topAppBarColors().containerColor
-            )
+            }
         )
         LazyColumn(
             modifier = Modifier
@@ -153,15 +179,6 @@ fun TimetableSettingsScreen(
                                 title = stringResource(R.string.show_weekends),
                                 checked = showWeekends,
                                 onToggle = { showWeekends = !showWeekends }
-                            ),
-                            SettingsItem.Toggle(
-                                icon = SettingsIcon.Vector(Icons.Default.Visibility),
-                                title = stringResource(R.string.show_non_current_week_courses),
-                                description = stringResource(R.string.show_non_current_week_courses_summary),
-                                checked = showNonCurrentWeekCourses,
-                                onToggle = {
-                                    showNonCurrentWeekCourses = !showNonCurrentWeekCourses
-                                }
                             )
                         )
                     )

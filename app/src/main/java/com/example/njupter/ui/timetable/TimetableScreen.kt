@@ -16,8 +16,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Add
@@ -40,6 +38,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.tooling.preview.Preview
@@ -82,8 +81,7 @@ private data class CourseDetailsSelection(
 
 private data class CourseDisplayItem(
     val session: CourseSession,
-    val course: CourseInfo,
-    val isActiveInCurrentWeek: Boolean
+    val course: CourseInfo
 )
 
 @OptIn(ExperimentalMaterial3Api::class) // 使用实验性的 Material3 API
@@ -99,7 +97,6 @@ fun TimetableScreen(
     currentWeek: Int = 1,
     sessionTimes: List<String> = emptyList(),
     showWeekends: Boolean = true,
-    showNonCurrentWeekCourses: Boolean = false,
     enableCurrentTimeIndicator: Boolean = true,
     courseColorTone: CourseColorTone = CourseColorTone.STANDARD,
     isLoading: Boolean = false,
@@ -329,7 +326,6 @@ fun TimetableScreen(
         CourseDetailsBottomSheet(
             course = selection.course,
             session = selection.session,
-            sessionTimes = sessionTimes,
             onDismiss = { courseDetailsSelection = null },
             onEdit = {
                 courseDetailsSelection = null
@@ -496,48 +492,144 @@ fun TimetableScreen(
             }
         }
     ) { innerPadding ->
-        HorizontalPager(
-            state = pagerState,
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 // Android 15+ 的 ARR 默认把 App 压在 60Hz；该节点只在需要重绘时投票，
                 // 所以滑动/惯性期间才会抬到高刷，静止页面不会长期占用高帧率。
-                .preferredFrameRate(FrameRateCategory.High),
-            verticalAlignment = Alignment.Top
-        ) { page ->
-            val currentWeek = page + 1
+                .preferredFrameRate(FrameRateCategory.High)
+        ) {
             val pageScrollState = rememberScrollState()
+
+            // 竖向滚动与初始布局一致：表头/时间栏/网格整体滚动。
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(pageScrollState)
+            ) {
+                // 固定星期栏（pager 外，位置不随翻页滑动；日期随 currentPage 更新）
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(gridHeaderBg)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .width(sidebarWidth)
+                            .height(headerHeight)
+                    )
+                    dayLabels.forEachIndexed { index, dayLabel ->
+                        val dateString = getDateForWeekDay(
+                            currentStartDate,
+                            pagerState.currentPage + 1,
+                            index + 1
+                        )
+                        val isToday = todayWeekIndex == pagerState.currentPage &&
+                            todayDayOfWeek == index + 1
+
+                        val cellContainerColor = if (isToday) {
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                        } else {
+                            Color.Transparent
+                        }
+                        val dayTextColor = if (isToday) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        }
+                        val dateTextColor = if (isToday) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(45.dp)
+                                .padding(horizontal = 2.dp, vertical = 3.dp)
+                                .then(
+                                    if (isToday) {
+                                        Modifier
+                                            .clip(MaterialTheme.shapes.small)
+                                            .background(cellContainerColor)
+                                    } else {
+                                        Modifier
+                                    }
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    text = dayLabel,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Medium,
+                                    color = dayTextColor
+                                )
+                                Text(
+                                    text = dateString,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = dateTextColor,
+                                    fontWeight = FontWeight.Normal
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Grid Body（与初始布局一致：时间栏 + 翻页内容）
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(sectionHeight * maxSection)
+                        .background(gridContentBg)
+                ) {
+                    TimetableSectionSidebar(
+                        modifier = Modifier
+                            .width(sidebarWidth)
+                            .height(sectionHeight * maxSection),
+                        gridBg = gridContentBg,
+                        sessionTimes = sessionTimes,
+                        maxSection = maxSection,
+                        currentSectionIndex = currentSectionIndex,
+                        highlightCurrentSection = showCurrentTimeIndicator
+                    )
+
+                    Box(modifier = Modifier.weight(1f)) {
+                    HorizontalPager(
+                        state = pagerState,
+                        // 显式高度：Pager 高度不再依赖 wrap 测量（unbounded 环境下不可靠）
+                        modifier = Modifier.height(sectionHeight * maxSection),
+                        verticalAlignment = Alignment.Top
+                    ) { page ->
+                        val currentWeek = page + 1
 
                     val sessionsByDay = remember(
                         courseSessions,
                         courseMap,
                         currentWeek,
-                        daysCount,
-                        showNonCurrentWeekCourses
+                        daysCount
                     ) {
                         val map = mutableMapOf<Int, List<CourseDisplayItem>>()
                         for (day in 1..daysCount) {
                             map[day] = courseSessions
                                 .filter { session ->
-                                    session.day == day && (
-                                        showNonCurrentWeekCourses || session.weeks.contains(currentWeek)
-                                    )
+                                    session.day == day && session.weeks.contains(currentWeek)
                                 }
                                 .mapNotNull { session ->
                                     courseMap[session.courseId]?.let { course ->
                                         CourseDisplayItem(
                                             session = session,
-                                            course = course,
-                                            isActiveInCurrentWeek = session.weeks.contains(currentWeek)
+                                            course = course
                                         )
                                     }
                                 }
-                                // Disjoint-week sessions may occupy the same cell. Draw active courses
-                                // last so a grey inactive card can never cover this week's course.
                                 .sortedWith(
-                                    compareBy<CourseDisplayItem> { it.isActiveInCurrentWeek }
-                                        .thenBy { it.session.startSection }
+                                    compareBy<CourseDisplayItem> { it.session.startSection }
                                         .thenBy { it.session.endSection }
                                 )
                         }
@@ -546,107 +638,24 @@ fun TimetableScreen(
 
                     Column(
                         modifier = Modifier
-                            .fillMaxSize()
+                            .fillMaxWidth()
                             // 页面内容录进独立 RenderNode：滑动中 pager 每帧只平移 layer，
                             // 不重录网格线/卡片背景/文本的 display list（未 layer 时每帧
                             // 在主线程重录两页全部 draw ops，是滑动途中每帧成本的大头）。
                             .graphicsLayer()
-                            .verticalScroll(pageScrollState)
                     ) {
+                        // Grid Body（初始布局的网格外壳：固定高度 + 内容区）
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(gridHeaderBg)
+                                .height(sectionHeight * maxSection)
+                                .background(gridContentBg)
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .width(sidebarWidth)
-                                    .height(headerHeight)
-                            )
-
-                            dayLabels.forEachIndexed { index, dayLabel ->
-                                val dateString = getDateForWeekDay(
-                                    currentStartDate,
-                                    currentWeek,
-                                    index + 1
-                                )
-                                val isToday = todayWeekIndex == page && todayDayOfWeek == index + 1
-
-                                val cellContainerColor = if (isToday) {
-                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-                                } else {
-                                    Color.Transparent
-                                }
-                                val dayTextColor = if (isToday) {
-                                    MaterialTheme.colorScheme.onPrimaryContainer
-                                } else {
-                                    MaterialTheme.colorScheme.onSurface
-                                }
-                                val dateTextColor = if (isToday) {
-                                    MaterialTheme.colorScheme.onPrimaryContainer
-                                } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                }
-
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(45.dp)
-                                        .padding(horizontal = 2.dp, vertical = 3.dp)
-                                        .then(
-                                            if (isToday) {
-                                                Modifier
-                                                    .clip(MaterialTheme.shapes.small)
-                                                    .background(cellContainerColor)
-                                            } else {
-                                                Modifier
-                                            }
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.Center
-                                    ) {
-                                        Text(
-                                            text = dayLabel,
-                                            style = MaterialTheme.typography.labelLarge,
-                                            fontWeight = FontWeight.Medium,
-                                            color = dayTextColor
-                                        )
-                                        Text(
-                                            text = dateString,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = dateTextColor,
-                                            fontWeight = FontWeight.Normal
-                                        )
-                    }
-                }
-            }
-        }
-
-                // Grid Body
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(sectionHeight * maxSection)
-                        .background(gridContentBg)
-                ) {
-                    TimetableSectionSidebar(
-                        modifier = Modifier.width(sidebarWidth),
-                        gridBg = gridContentBg,
-                        sessionTimes = sessionTimes,
-                        maxSection = maxSection,
-                        currentSectionIndex = currentSectionIndex,
-                        highlightCurrentSection = showCurrentTimeIndicator
-                    )
-
-                    // Course content area
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                    ) {
+                                    .weight(1f)
+                                    .fillMaxHeight()
+                            ) {
                         // 1. Grid lines. Draw every line once so adjacent cells do not
                         // double their opacity, and use the same proportional boundaries
                         // as course cards to avoid density-dependent rounding drift.
@@ -756,12 +765,15 @@ fun TimetableScreen(
                                 )
                             }
                         }
+                        }
                     }
                 }
 
+                }
+            }
             }
         }
-
+        }
         if (showDialog) {
             CourseEditorDialog(
                 initialSession = editingSession,
@@ -926,7 +938,6 @@ private fun CourseDayColumn(
                     course = item.course,
                     classroom = item.session.classroom,
                     colorsList = colorsList,
-                    isActiveInCurrentWeek = item.isActiveInCurrentWeek,
                     autoColorIndex = autoColorIndices[item.course.id],
                     textMeasurer = textMeasurer,
                     onClick = { onCourseClick(item.session, item.course) }
@@ -984,8 +995,13 @@ internal fun findCurrentSectionPosition(sessionTimes: List<String>, currentMinut
         Triple(index, startMinute, endMinute)
     }
 
-    validSections.forEach { (index, startMinute, endMinute) ->
+    // 早于首节开始（如 8 点前）或晚于末节结束（如 21:05 后）→ 不显示时间线。
+    // 课间（两节之间）仍钉在下一节开始线，保留现状。
+    val firstStart = validSections.firstOrNull()?.second ?: return null
+    val lastEnd = validSections.last().third
+    if (currentMinuteOfDay < firstStart || currentMinuteOfDay >= lastEnd) return null
 
+    validSections.forEach { (index, startMinute, endMinute) ->
         if (currentMinuteOfDay in startMinute until endMinute) {
             val progress = (currentMinuteOfDay - startMinute).toFloat() / (endMinute - startMinute).toFloat()
             return index to progress.coerceIn(0f, 1f)
@@ -996,9 +1012,7 @@ internal fun findCurrentSectionPosition(sessionTimes: List<String>, currentMinut
         }
     }
 
-    // There is no later section after the last class period. Keep the enabled
-    // indicator visible on the final end boundary instead of hiding it.
-    return validSections.lastOrNull()?.let { (index, _, _) -> index to 1f }
+    return null
 }
 
 private fun parseMinuteOfDay(text: String): Int? {
