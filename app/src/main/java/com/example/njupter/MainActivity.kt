@@ -10,6 +10,7 @@ import android.app.Activity
 import android.util.Log
 import android.view.animation.DecelerateInterpolator
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -42,6 +43,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 
 import com.example.njupter.data.FileTimetableRepository
+import com.example.njupter.ui.LocalActivityContext
 import com.example.njupter.ui.timetable.TimetableScreen
 import com.example.njupter.viewmodels.TimetableViewModel
 import com.example.njupter.data.LocalFileDataSource
@@ -177,10 +179,18 @@ class MainActivity : ComponentActivity() {
                 applyHideFromRecents(hideFromRecents)
             }
 
-            NJUPTerTheme(
-                themeMode = appThemeMode,
-                dynamicColor = dynamicColorEnabled
+            // 组合根的 LocalContext 即 Activity 本体；语言切换会在深处把 LocalContext
+            // 覆写为 createConfigurationContext 的结果（非 Activity，也无法沿链找回），
+            // 而 startActivity / ActivityResult 注册需要真 Activity，故在此显式捕获并下发
+            val activityContext = LocalContext.current
+            CompositionLocalProvider(
+                LocalActivityContext provides activityContext,
+                LocalActivityResultRegistryOwner provides activityContext as ComponentActivity,
             ) {
+                NJUPTerTheme(
+                    themeMode = appThemeMode,
+                    dynamicColor = dynamicColorEnabled
+                ) {
                 val uiState by viewModel.uiState.collectAsState()   // 观察状态，将StateFlow转换成Compose的State
                 val importState by viewModel.importState.collectAsState()   // 同上
                 val appLanguageTag by settingsRepository.getAppLanguageTag().collectAsState(initial = settingsRepository.peekAppLanguageTag())
@@ -507,6 +517,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 }
+            }
             }
         }
     }

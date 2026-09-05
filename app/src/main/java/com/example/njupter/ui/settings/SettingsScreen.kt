@@ -36,6 +36,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.njupter.R
+import com.example.njupter.ui.LocalActivityContext
 import com.example.njupter.ui.settings.component.SettingsSectionCard
 import com.example.njupter.ui.settings.dialog.ReminderLeadDialog
 import com.example.njupter.ui.settings.model.SettingsItem
@@ -66,6 +67,8 @@ fun SettingsScreen(
     onReminderLeadMinutesChange: (Int) -> Unit = {}
 ) {
     val context = LocalContext.current
+    // 语言覆写后 LocalContext 可能不是 Activity，跳系统设置必须用真 Activity
+    val activityContext = LocalActivityContext.current ?: context
     val lifecycleOwner = LocalLifecycleOwner.current
 
     var notificationEnabled by remember { 
@@ -173,7 +176,7 @@ fun SettingsScreen(
                 stringResource(R.string.not_granted)
             },
             onClick = {
-                if (!openNotificationSettings(context)) {
+                if (!openNotificationSettings(activityContext)) {
                     Toast.makeText(context, R.string.cannot_open_settings, Toast.LENGTH_SHORT).show()
                 }
             }
@@ -199,7 +202,7 @@ fun SettingsScreen(
                 stringResource(R.string.not_granted)
             },
             onClick = {
-                if (!openBatteryOptimizationSettings(context)) {
+                if (!openBatteryOptimizationSettings(activityContext)) {
                     Toast.makeText(context, R.string.cannot_open_settings, Toast.LENGTH_SHORT).show()
                 }
             }
@@ -209,7 +212,7 @@ fun SettingsScreen(
             title = stringResource(R.string.background_high_power),
             description = stringResource(R.string.background_high_power_summary),
             onClick = {
-                if (!openBackgroundHighPowerSettings(context)) {
+                if (!openBackgroundHighPowerSettings(activityContext)) {
                     Toast.makeText(context, R.string.cannot_open_settings, Toast.LENGTH_SHORT).show()
                 }
             }
@@ -224,7 +227,7 @@ fun SettingsScreen(
                 stringResource(R.string.not_granted)
             },
             onClick = {
-                if (!openExactAlarmSettings(context)) {
+                if (!openExactAlarmSettings(activityContext)) {
                     Toast.makeText(context, R.string.cannot_open_settings, Toast.LENGTH_SHORT).show()
                 }
             }
