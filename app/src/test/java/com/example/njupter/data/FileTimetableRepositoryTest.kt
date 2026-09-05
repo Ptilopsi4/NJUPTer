@@ -130,7 +130,6 @@ private class FakeTimetableDataSource(
         startDate: Long,
         totalWeeks: Int,
         showWeekends: Boolean,
-        showNonCurrentWeekCourses: Boolean,
         sessionTimes: List<String>
     ) = Unit
 
@@ -159,6 +158,7 @@ private class FakeSettingsRepository(lastSelectedId: String?) : SettingsReposito
     private val predictiveBackAnimation = MutableStateFlow(PredictiveBackAnimation.SCALE)
     private val predictiveBackExitDirection =
         MutableStateFlow(PredictiveBackExitDirection.FOLLOW_GESTURE)
+    private val reminderLeadMinutes = MutableStateFlow(SettingsRepository.DEFAULT_REMINDER_LEAD_MINUTES)
 
     override fun getShowWeekends() = showWeekends
     override suspend fun setShowWeekends(show: Boolean) { showWeekends.value = show }
@@ -189,5 +189,9 @@ private class FakeSettingsRepository(lastSelectedId: String?) : SettingsReposito
     override fun getPredictiveBackExitDirection() = predictiveBackExitDirection
     override suspend fun setPredictiveBackExitDirection(direction: PredictiveBackExitDirection) {
         predictiveBackExitDirection.value = direction
+    }
+    override fun getReminderLeadMinutes() = reminderLeadMinutes
+    override suspend fun setReminderLeadMinutes(minutes: Int) {
+        reminderLeadMinutes.value = minutes
     }
 }

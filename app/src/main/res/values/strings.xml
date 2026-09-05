@@ -147,29 +147,29 @@
     <string name="error_no_week">Error: At least one week must be selected.</string>
     <string name="error_time_conflict">Error: Time conflict with existing session: Day %1$d, Sections %2$d-%3$d.</string>
     <string name="error_course_duplicate">Error: Course \'%1$s\' with teacher \'%2$s\' already exists.</string>
-    <string name="error_unknown">Unknown error</string>
 
     <!-- Import Summary -->
-    <string name="import_summary">Found %1$d new courses, %2$d new sessions.</string>
     <string name="default_timetable_name">My Timetable</string>
     <string name="course_reminder_channel_name">Course Reminder</string>
-    <string name="course_reminder_channel_desc">Notifies 10 minutes before class starts</string>
-    <string name="course_reminder_title">Class starts in 10 minutes</string>
+    <string name="course_reminder_channel_desc">Notifies before class starts</string>
+    <string name="course_reminder_title">Class starts in %1$d minutes</string>
     <string name="course_reminder_content">%1$s · %2$s · %3$s · %4$s</string>
+    <string name="reminder_lead_time">Reminder lead time</string>
+    <string name="reminder_lead_time_summary">Minutes before class to notify</string>
+    <string name="reminder_lead_min_value">%1$d min</string>
+    <string name="reminder_lead_minutes_label">Minutes</string>
+    <string name="reminder_lead_range_hint">Range 0–120; 0 = notify at class start</string>
+    <string name="minutes_unit">min</string>
+    <string name="course_reminder_toggle">Class reminder</string>
+    <string name="course_reminder_toggle_summary">Notify before this course starts</string>
     <string name="notification_permission">Notification Permission</string>
-    <string name="notification_permission_desc">Required to display class reminders</string>
     <string name="battery_optimization">Battery Optimization</string>
-    <string name="battery_optimization_desc">Allow running in background for timely reminders</string>
     <string name="current_time_indicator">Current Time Indicator</string>
     <string name="cannot_open_settings">Unable to open settings</string>
     <string name="language">Language</string>
     <string name="language_en">English</string>
     <string name="language_zh">Chinese</string>
     <string name="language_system">Follow System</string>
-    <string name="close">Close</string>
-    <string name="status_enabled">Enabled</string>
-    <string name="status_disabled">Disabled</string>
-    <string name="go_to_settings">Go to settings</string>
 
     <!-- Widget -->
     <string name="widget_description">Shows today\'s courses on your home screen</string>

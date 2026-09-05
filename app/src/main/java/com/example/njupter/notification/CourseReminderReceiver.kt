@@ -22,6 +22,7 @@ class CourseReminderReceiver : BroadcastReceiver() {
         val timeText = intent.getStringExtra(CourseReminderContract.EXTRA_TIME_TEXT).orEmpty()
         val classroom = intent.getStringExtra(CourseReminderContract.EXTRA_CLASSROOM).orEmpty()
         val teacher = intent.getStringExtra(CourseReminderContract.EXTRA_TEACHER).orEmpty()
+        val leadMinutes = intent.getIntExtra(CourseReminderContract.EXTRA_LEAD_MINUTES, 10)
 
         ensureChannel(context)
 
@@ -45,7 +46,9 @@ class CourseReminderReceiver : BroadcastReceiver() {
 
         val notification = NotificationCompat.Builder(context, CourseReminderContract.CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle(context.getString(R.string.course_reminder_title))
+            .setContentTitle(
+                context.getString(R.string.course_reminder_title, leadMinutes)
+            )
             .setContentText(contentText)
             .setStyle(NotificationCompat.BigTextStyle().bigText(contentText))
             .setPriority(NotificationCompat.PRIORITY_HIGH)

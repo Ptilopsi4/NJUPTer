@@ -81,6 +81,7 @@ fun CourseEditorDialog(
     var classroom by remember(initialSession) { mutableStateOf(initialSession?.classroom ?: "") }
     var note by remember { mutableStateOf(initialCourse?.note ?: "") }
     var attendanceType by remember { mutableStateOf(initialCourse?.attendanceType ?: "") }
+    var reminderEnabled by remember { mutableStateOf(initialCourse?.reminderEnabled ?: false) }
     var selectedColorIndex by remember { mutableStateOf(initialCourse?.colorIndex ?: -1) }
 
     // Session
@@ -173,6 +174,8 @@ fun CourseEditorDialog(
                 onAttendanceTypeChange = { attendanceType = it },
                 note = note,
                 onNoteChange = { note = it },
+                reminderEnabled = reminderEnabled,
+                onReminderEnabledChange = { reminderEnabled = it },
                 selectedColorIndex = selectedColorIndex,
                 onColorSelect = { selectedColorIndex = it },
                 colorsList = colorsList,
@@ -244,7 +247,8 @@ fun CourseEditorDialog(
                     credit = initialCourse?.credit.orEmpty(),
                     courseNature = initialCourse?.courseNature.orEmpty(),
                     note = note.trim(),
-                    attendanceType = attendanceType.trim()
+                    attendanceType = attendanceType.trim(),
+                    reminderEnabled = reminderEnabled
                 )
                 // Re-create session with final values
                 val finalSession = CourseSession(
@@ -280,6 +284,8 @@ private fun CourseEditorForm(
     onAttendanceTypeChange: (String) -> Unit,
     note: String,
     onNoteChange: (String) -> Unit,
+    reminderEnabled: Boolean = true,
+    onReminderEnabledChange: (Boolean) -> Unit = {},
     selectedColorIndex: Int,
     onColorSelect: (Int) -> Unit,
     colorsList: List<Color>,
@@ -363,6 +369,28 @@ private fun CourseEditorForm(
             minLines = 1,
             maxLines = 4
         )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    stringResource(R.string.course_reminder_toggle),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    stringResource(R.string.course_reminder_toggle_summary),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Switch(
+                checked = reminderEnabled,
+                onCheckedChange = onReminderEnabledChange
+            )
+        }
 
         HorizontalDivider(Modifier.padding(10.dp, vertical = 10.dp))
 

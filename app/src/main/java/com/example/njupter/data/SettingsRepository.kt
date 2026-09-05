@@ -33,6 +33,8 @@ interface SettingsRepository {
     suspend fun setPredictiveBackAnimation(animation: PredictiveBackAnimation)
     fun getPredictiveBackExitDirection(): Flow<PredictiveBackExitDirection>
     suspend fun setPredictiveBackExitDirection(direction: PredictiveBackExitDirection)
+    fun getReminderLeadMinutes(): Flow<Int>
+    suspend fun setReminderLeadMinutes(minutes: Int)
 
     fun peekLastSelectedTimetableId(): String? {
         return (getLastSelectedTimetableId() as? StateFlow)?.value
@@ -63,6 +65,16 @@ interface SettingsRepository {
         return (getPredictiveBackExitDirection() as? StateFlow)?.value
             ?: PredictiveBackExitDirection.FOLLOW_GESTURE
     }
+
+    fun peekReminderLeadMinutes(): Int {
+        return (getReminderLeadMinutes() as? StateFlow)?.value ?: DEFAULT_REMINDER_LEAD_MINUTES
+    }
+
+    companion object {
+        const val DEFAULT_REMINDER_LEAD_MINUTES = 10
+        const val MIN_REMINDER_LEAD_MINUTES = 0
+        const val MAX_REMINDER_LEAD_MINUTES = 120
+    }
 }
 
 class SharedPreferencesSettingsRepository(context: Context) : SettingsRepository {
@@ -78,6 +90,7 @@ class SharedPreferencesSettingsRepository(context: Context) : SettingsRepository
         private const val KEY_COURSE_COLOR_TONE = "course_color_tone"
         private const val KEY_PREDICTIVE_BACK_ANIMATION = "predictive_back_animation"
         private const val KEY_PREDICTIVE_BACK_EXIT_DIRECTION = "predictive_back_exit_direction"
+        private const val KEY_REMINDER_LEAD_MINUTES = "reminder_lead_minutes"
     }
 
     private fun readLastWeekRecords(): Map<String, Int> {
@@ -115,6 +128,9 @@ class SharedPreferencesSettingsRepository(context: Context) : SettingsRepository
             KEY_PREDICTIVE_BACK_EXIT_DIRECTION,
             PredictiveBackExitDirection.FOLLOW_GESTURE
         )
+    )
+    private val _reminderLeadMinutes = MutableStateFlow(
+        prefs.getInt(KEY_REMINDER_LEAD_MINUTES, SettingsRepository.DEFAULT_REMINDER_LEAD_MINUTES)
     )
 
     override fun getShowWeekends(): Flow<Boolean> = _showWeekends.asStateFlow()
@@ -192,6 +208,17 @@ class SharedPreferencesSettingsRepository(context: Context) : SettingsRepository
     override suspend fun setPredictiveBackExitDirection(direction: PredictiveBackExitDirection) {
         prefs.edit { putString(KEY_PREDICTIVE_BACK_EXIT_DIRECTION, direction.name) }
         _predictiveBackExitDirection.value = direction
+    }
+
+    override fun getReminderLeadMinutes(): Flow<Int> = _reminderLeadMinutes.asStateFlow()
+
+    override suspend fun setReminderLeadMinutes(minutes: Int) {
+        val clamped = minutes.coerceIn(
+            SettingsRepository.MIN_REMINDER_LEAD_MINUTES,
+            SettingsRepository.MAX_REMINDER_LEAD_MINUTES
+        )
+        prefs.edit { putInt(KEY_REMINDER_LEAD_MINUTES, clamped) }
+        _reminderLeadMinutes.value = clamped
     }
 }
 

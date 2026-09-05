@@ -11,9 +11,13 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import com.example.njupter.data.CourseInfo
 import com.example.njupter.data.CourseSession
+import com.example.njupter.data.SettingsRepository
 import com.example.njupter.domain.getMillisForWeekDay
 
-class CourseReminderScheduler(private val context: Context) {
+class CourseReminderScheduler(
+    private val context: Context,
+    private val settingsRepository: SettingsRepository
+) {
     private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
@@ -43,6 +47,7 @@ class CourseReminderScheduler(private val context: Context) {
         val now = System.currentTimeMillis()
         val horizon = now + SCHEDULE_WINDOW_MILLIS
         val requestCodes = mutableSetOf<Int>()
+        val leadMillis = settingsRepository.peekReminderLeadMinutes() * 60_000L
 
         for (week in 1..totalWeeks) {
             sessions.forEach { session ->
@@ -55,11 +60,13 @@ class CourseReminderScheduler(private val context: Context) {
                     day = session.day,
                     minuteOfDay = startMinute
                 )
-                val reminderMillis = classStartMillis - REMINDER_LEAD_MILLIS
+                val reminderMillis = classStartMillis - leadMillis
 
                 if (reminderMillis <= now || reminderMillis > horizon) return@forEach
 
                 val course = courseMap[session.courseId] ?: return@forEach
+                if (!course.reminderEnabled) return@forEach    // 单课提醒开关
+
                 val timeText = buildSessionTimeText(sessionTimes, session.startSection, session.endSection)
                 val requestCode = buildRequestCode(currentTimetableId, session.courseId, week, classStartMillis)
 
@@ -69,6 +76,7 @@ class CourseReminderScheduler(private val context: Context) {
                     putExtra(CourseReminderContract.EXTRA_TIME_TEXT, timeText)
                     putExtra(CourseReminderContract.EXTRA_CLASSROOM, session.classroom)
                     putExtra(CourseReminderContract.EXTRA_TEACHER, course.teacher)
+                    putExtra(CourseReminderContract.EXTRA_LEAD_MINUTES, (leadMillis / 60_000L).toInt())
                 }
 
                 val pendingIntent = PendingIntent.getBroadcast(
@@ -186,7 +194,6 @@ class CourseReminderScheduler(private val context: Context) {
     companion object {
         private const val PREFS_NAME = "course_reminder_scheduler"
         private const val KEY_REQUEST_CODES = "request_codes"
-        private const val REMINDER_LEAD_MILLIS = 10 * 60 * 1000L
         private const val DAY_MILLIS = 24 * 60 * 60 * 1000L
         private const val SCHEDULE_WINDOW_MILLIS = 21 * DAY_MILLIS
     }

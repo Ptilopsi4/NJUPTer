@@ -146,28 +146,29 @@
     <string name="error_no_week">错误：至少需要选择一周。</string>
     <string name="error_time_conflict">错误：与已有时段冲突：周%1$d，第%2$d-%3$d节。</string>
     <string name="error_course_duplicate">错误：课程 \'%1$s\'（教师：%2$s）已存在。</string>
-    <string name="error_unknown">未知错误</string>
 
     <!-- Import Summary -->
-    <string name="import_summary">共发现新课程组合 %1$d 门，新增上课时段 %2$d 个。</string>
     <string name="default_timetable_name">我的课表</string>
     <string name="course_reminder_channel_name">课程提醒</string>
-    <string name="course_reminder_channel_desc">上课前10分钟通知</string>
-    <string name="course_reminder_title">课程还有10分钟开始</string>
+    <string name="course_reminder_channel_desc">上课前通知上课信息</string>
+    <string name="course_reminder_title">课程还有%1$d分钟开始</string>
     <string name="course_reminder_content">%1$s · %2$s · %3$s · %4$s</string>
+    <string name="reminder_lead_time">提醒提前时间</string>
+    <string name="reminder_lead_time_summary">上课前多少分钟提醒</string>
+    <string name="reminder_lead_min_value">%1$d 分钟</string>
+    <string name="reminder_lead_minutes_label">分钟</string>
+    <string name="reminder_lead_range_hint">范围 0–120；0 = 上课时提醒</string>
+    <string name="minutes_unit">分钟</string>
+    <string name="course_reminder_toggle">上课提醒</string>
+    <string name="course_reminder_toggle_summary">上课前通知该课程</string>
     <string name="notification_permission">通知权限</string>
-    <string name="notification_permission_desc">用于显示课程提醒</string>
     <string name="battery_optimization">电池优化</string>
-    <string name="battery_optimization_desc">允许后台提醒以发送通知</string>
     <string name="current_time_indicator">当前时间指示器</string>
     <string name="cannot_open_settings">无法打开系统设置</string>
     <string name="language">语言</string>
     <string name="language_en">English</string>
     <string name="language_zh">中文</string>
     <string name="language_system">跟随系统</string>
-    <string name="close">关闭</string>
-    <string name="status_enabled">已启用</string>
-    <string name="status_disabled">已禁用</string>
 
     <!-- Widget -->
     <string name="widget_description">在主屏幕上显示今日课程</string>

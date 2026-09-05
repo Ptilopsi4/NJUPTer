@@ -2,6 +2,7 @@ package com.example.njupter.notification
 
 import android.content.Context
 import com.example.njupter.data.LocalFileDataSource
+import com.example.njupter.data.SharedPreferencesSettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -19,7 +20,10 @@ object ReminderBootstrapper {
         val meta = timetables.find { it.id == selectedId } ?: timetables.firstOrNull() ?: return@withContext
         val data = dataSource.loadTimetable(meta.id)
 
-        CourseReminderScheduler(context).scheduleUpcomingReminders(
+        CourseReminderScheduler(
+            context,
+            SharedPreferencesSettingsRepository(context)
+        ).scheduleUpcomingReminders(
             courseInfos = data.courses,
             sessions = data.sessions,
             currentTimetableId = meta.id,
