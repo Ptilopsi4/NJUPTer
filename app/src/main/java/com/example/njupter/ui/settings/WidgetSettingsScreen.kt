@@ -3,6 +3,7 @@ package com.example.njupter.ui.settings
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -66,7 +67,9 @@ import java.io.File
 import java.io.FileOutputStream
 import kotlinx.coroutines.launch
 
+private const val TAG = "WidgetSettings"
 private const val WIDGET_BG_FILE = "widget_background.jpg"
+private const val WIDGET_BG_SRC_FILE = "widget_bg_source"
 private const val MAX_BG_DIMENSION = 1600
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -454,15 +457,27 @@ private fun decodeSampled(path: String, maxDimension: Int): Bitmap? {
 /**
  * 将所选图片解码（带采样，限制最长边）后压缩为 JPEG 存储。
  * 失败返回 null，调用方负责提示且不改动现有设置。
+ *
+ * 先把 URI 流拷贝到临时文件再从文件解码：部分相册云图/一次性流 provider
+ * 不支持二次 openInputStream，原实现读两次会静默失败。
  */
 private fun saveBackgroundImage(context: android.content.Context, uri: Uri): String? {
-    return try {
+    val srcFile = File(context.cacheDir, WIDGET_BG_SRC_FILE)
+    try {
         val resolver = context.contentResolver
+        resolver.openInputStream(uri)?.use { input ->
+            FileOutputStream(srcFile).use { output -> input.copyTo(output) }
+        } ?: run {
+            Log.w(TAG, "openInputStream returned null: $uri")
+            return null
+        }
 
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
-            ?: return null
-        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+        BitmapFactory.decodeFile(srcFile.absolutePath, bounds)
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
+            Log.w(TAG, "unsupported image format: $uri mime=${resolver.getType(uri)}")
+            return null
+        }
 
         var sample = 1
         while (
@@ -472,18 +487,23 @@ private fun saveBackgroundImage(context: android.content.Context, uri: Uri): Str
             sample *= 2
         }
         val options = BitmapFactory.Options().apply { inSampleSize = sample }
-        val bitmap = resolver.openInputStream(uri)?.use {
-            BitmapFactory.decodeStream(it, null, options)
-        } ?: return null
+        val bitmap = BitmapFactory.decodeFile(srcFile.absolutePath, options)
+            ?: run {
+                Log.w(TAG, "sampled decode failed: ${bounds.outWidth}x${bounds.outHeight} sample=$sample")
+                return null
+            }
 
         val file = File(context.filesDir, WIDGET_BG_FILE)
         FileOutputStream(file).use { output ->
             bitmap.compress(Bitmap.CompressFormat.JPEG, 85, output)
         }
         bitmap.recycle()
-        file.absolutePath
-    } catch (_: Exception) {
-        null
+        return file.absolutePath
+    } catch (e: Exception) {
+        Log.w(TAG, "saveBackgroundImage failed", e)
+        return null
+    } finally {
+        srcFile.delete()
     }
 }
 
