@@ -4,9 +4,8 @@ import android.content.Context
 import androidx.glance.appwidget.updateAll
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 object WidgetDataManager {
     private const val PREFS_NAME = "widget_courses"
@@ -42,17 +41,28 @@ object WidgetDataManager {
         }
     }
 
-    fun refreshWidget(context: Context) {
-        val state = WidgetModels.computeWidgetDisplayState(context)
-        saveWidgetState(context, state)
-        state.nextRefreshAtMillis?.let { triggerAtMillis ->
-            WidgetUpdateScheduler.scheduleRefresh(context, triggerAtMillis)
-        }
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                CourseWidget().updateAll(context)
-            } catch (_: Exception) {
+    /**
+     * 重算 widget 状态并按需刷新。
+     * 计算/读盘部分下沉到 IO 线程（调用方可能在主线程）；
+     * 可视内容（课程/星期/周数等）未变时只补写 nextRefresh 时间戳，不重组 Glance，
+     * 避免切周次、改设置等无关变更触发全量 updateAll。
+     */
+    suspend fun refreshWidget(context: Context) = withContext(Dispatchers.IO) {
+        val newState = WidgetModels.computeWidgetDisplayState(context)
+        val previous = loadWidgetState(context)
+        try {
+            when {
+                previous != newState -> {
+                    saveWidgetState(context, newState)
+                    CourseWidget().updateAll(context)
+                }
+                previous.nextRefreshAtMillis != newState.nextRefreshAtMillis ->
+                    saveWidgetState(context, newState)
             }
+        } catch (_: Exception) {
+        }
+        newState.nextRefreshAtMillis?.let { triggerAtMillis ->
+            WidgetUpdateScheduler.scheduleRefresh(context, triggerAtMillis)
         }
     }
 }

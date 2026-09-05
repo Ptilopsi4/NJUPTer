@@ -51,7 +51,7 @@ data class TimetableUiState(
 class TimetableViewModel(
     private val repository: TimetableRepository,
     private val settingsRepository: SettingsRepository,
-    private val onWidgetRefresh: (Context) -> Unit = {}
+    private val onWidgetRefresh: suspend (Context) -> Unit = {}
 ) : ViewModel() {
 
     private var appContext: Context? = null

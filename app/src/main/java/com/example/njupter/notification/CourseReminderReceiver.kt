@@ -21,7 +21,7 @@ class CourseReminderReceiver : BroadcastReceiver() {
         val courseName = intent.getStringExtra(CourseReminderContract.EXTRA_COURSE_NAME).orEmpty()
         val timeText = intent.getStringExtra(CourseReminderContract.EXTRA_TIME_TEXT).orEmpty()
         val classroom = intent.getStringExtra(CourseReminderContract.EXTRA_CLASSROOM).orEmpty()
-        val teacher = intent.getStringExtra(CourseReminderContract.EXTRA_TEACHER).orEmpty()
+        val attendanceType = intent.getStringExtra(CourseReminderContract.EXTRA_ATTENDANCE_TYPE).orEmpty()
         val leadMinutes = intent.getIntExtra(CourseReminderContract.EXTRA_LEAD_MINUTES, 10)
 
         ensureChannel(context)
@@ -36,16 +36,13 @@ class CourseReminderReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val contentText = context.getString(
-            R.string.course_reminder_content,
-            courseName,
-            timeText,
-            classroom,
-            teacher
-        )
+        // 正文按段拼接，空段连同分隔符一起省略，避免悬空的 " · "
+        val contentText = listOf(courseName, timeText, classroom, attendanceType)
+            .filter { it.isNotBlank() }
+            .joinToString(separator = " · ")
 
         val notification = NotificationCompat.Builder(context, CourseReminderContract.CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(
                 context.getString(R.string.course_reminder_title, leadMinutes)
             )

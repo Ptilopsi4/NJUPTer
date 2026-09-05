@@ -145,7 +145,6 @@
     <string name="course_reminder_channel_name">课程提醒</string>
     <string name="course_reminder_channel_desc">上课前通知上课信息</string>
     <string name="course_reminder_title">课程还有%1$d分钟开始</string>
-    <string name="course_reminder_content">%1$s · %2$s · %3$s · %4$s</string>
     <string name="reminder_lead_time">提醒提前时间</string>
     <string name="reminder_lead_time_summary">上课前多少分钟提醒</string>
     <string name="reminder_lead_min_value">%1$d 分钟</string>

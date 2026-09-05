@@ -109,7 +109,7 @@ class LocalFileDataSource(private val context: Context) : TimetableDataSource {
                         courseNature = it.courseNature.orEmpty(),
                         note = it.note.orEmpty(),
                         attendanceType = it.attendanceType.orEmpty(),
-                        reminderEnabled = it.reminderEnabled ?: true    // 旧数据默认开启提醒
+                        reminderEnabled = it.reminderEnabled ?: false    // 旧数据无该字段时同样默认关闭，与手动新增一致
                     )
                 }
                 val domainSessions = root.sessions.map {

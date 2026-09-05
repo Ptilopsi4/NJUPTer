@@ -47,6 +47,7 @@ class CourseReminderScheduler(
         val now = System.currentTimeMillis()
         val horizon = now + SCHEDULE_WINDOW_MILLIS
         val requestCodes = mutableSetOf<Int>()
+        val assignedCodes = mutableMapOf<Int, String>()    // requestCode -> 唯一键，用于碰撞检测
         val leadMillis = settingsRepository.peekReminderLeadMinutes() * 60_000L
 
         for (week in 1..totalWeeks) {
@@ -68,14 +69,16 @@ class CourseReminderScheduler(
                 if (!course.reminderEnabled) return@forEach    // 单课提醒开关
 
                 val timeText = buildSessionTimeText(sessionTimes, session.startSection, session.endSection)
-                val requestCode = buildRequestCode(currentTimetableId, session.courseId, week, classStartMillis)
+                val reminderKey = "$currentTimetableId|$session.courseId|$week|$classStartMillis"
+                val requestCode = resolveCollisionFreeRequestCode(assignedCodes, reminderKey)
+                assignedCodes[requestCode] = reminderKey
 
                 val reminderIntent = Intent(context, CourseReminderReceiver::class.java).apply {
                     putExtra(CourseReminderContract.EXTRA_NOTIFICATION_ID, requestCode)
                     putExtra(CourseReminderContract.EXTRA_COURSE_NAME, course.name)
                     putExtra(CourseReminderContract.EXTRA_TIME_TEXT, timeText)
                     putExtra(CourseReminderContract.EXTRA_CLASSROOM, session.classroom)
-                    putExtra(CourseReminderContract.EXTRA_TEACHER, course.teacher)
+                    putExtra(CourseReminderContract.EXTRA_ATTENDANCE_TYPE, course.attendanceType)
                     putExtra(CourseReminderContract.EXTRA_LEAD_MINUTES, (leadMillis / 60_000L).toInt())
                 }
 
@@ -149,15 +152,6 @@ class CourseReminderScheduler(
         return hour * 60 + minute
     }
 
-    private fun buildRequestCode(
-        timetableId: String,
-        courseId: String,
-        week: Int,
-        classStartMillis: Long
-    ): Int {
-        return ("$timetableId|$courseId|$week|$classStartMillis".hashCode() and 0x7fffffff)
-    }
-
     private fun scheduleExactSafely(triggerAtMillis: Long, pendingIntent: PendingIntent) {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
@@ -197,4 +191,20 @@ class CourseReminderScheduler(
         private const val DAY_MILLIS = 24 * 60 * 60 * 1000L
         private const val SCHEDULE_WINDOW_MILLIS = 21 * DAY_MILLIS
     }
+}
+
+/**
+ * 由唯一键派生 requestCode；hashCode 截断到 31 位后可能碰撞，
+ * 已被其它键占用时线性探测找空位，避免 PendingIntent/通知互相覆盖。
+ * 同键重复调用返回同一个值，保证重排时能幂等更新。
+ */
+internal fun resolveCollisionFreeRequestCode(
+    assignedCodes: Map<Int, String>,
+    reminderKey: String
+): Int {
+    var code = reminderKey.hashCode() and 0x7fffffff
+    while (assignedCodes.containsKey(code) && assignedCodes[code] != reminderKey) {
+        code = (code + 1) and 0x7fffffff
+    }
+    return code
 }

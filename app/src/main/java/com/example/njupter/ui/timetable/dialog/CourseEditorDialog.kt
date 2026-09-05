@@ -305,7 +305,7 @@ private fun CourseEditorForm(
     onAttendanceTypeChange: (String) -> Unit,
     note: String,
     onNoteChange: (String) -> Unit,
-    reminderEnabled: Boolean = true,
+    reminderEnabled: Boolean = false,
     onReminderEnabledChange: (Boolean) -> Unit = {},
     selectedColorIndex: Int,
     onColorSelect: (Int) -> Unit,

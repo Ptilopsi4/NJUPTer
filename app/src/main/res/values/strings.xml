@@ -146,7 +146,6 @@
     <string name="course_reminder_channel_name">Course Reminder</string>
     <string name="course_reminder_channel_desc">Notifies before class starts</string>
     <string name="course_reminder_title">Class starts in %1$d minutes</string>
-    <string name="course_reminder_content">%1$s · %2$s · %3$s · %4$s</string>
     <string name="reminder_lead_time">Reminder lead time</string>
     <string name="reminder_lead_time_summary">Minutes before class to notify</string>
     <string name="reminder_lead_min_value">%1$d min</string>

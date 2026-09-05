@@ -71,6 +71,10 @@ import java.util.Locale
  */
 
 class MainActivity : ComponentActivity() {
+
+    private companion object {
+        const val REQUEST_CODE_POST_NOTIFICATIONS = 1001
+    }
     private fun applyLocaleToActivityResources(languageTag: String) {
         val locale = when {
             languageTag.startsWith("zh") -> Locale.SIMPLIFIED_CHINESE
@@ -110,7 +114,7 @@ class MainActivity : ComponentActivity() {
                 ActivityCompat.requestPermissions(
                     this,
                     arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                    1001
+                    REQUEST_CODE_POST_NOTIFICATIONS
                 )
             }
         }
@@ -129,11 +133,17 @@ class MainActivity : ComponentActivity() {
         val viewModel by viewModels<TimetableViewModel> {
             TimetableViewModel.provideFactory(repository, settingsRepository, this@MainActivity)
         }
-
+        var lastWidgetTimetableId: String? = null
         lifecycleScope.launch {
             viewModel.uiState.collectLatest { uiState ->
                 keepSplash = uiState.isLoading
-                if (!uiState.isLoading && uiState.currentTimetableId != null) {
+                // 只在课表 id 变化（首载/切换/新建/删除）时刷 widget；
+                // 课程编辑后的刷新由 viewModel.onWidgetRefresh 负责，
+                // 切周次、撤销等无关变更不再触发读盘+Glance 重组
+                if (!uiState.isLoading && uiState.currentTimetableId != null &&
+                    uiState.currentTimetableId != lastWidgetTimetableId
+                ) {
+                    lastWidgetTimetableId = uiState.currentTimetableId
                     WidgetDataManager.refreshWidget(this@MainActivity)
                 }
             }
@@ -235,12 +245,21 @@ class MainActivity : ComponentActivity() {
                 // Reschedule reminders whenever timetable data settles.
                 // snapshotFlow + debounce 合并连续变更（如导入 N 门课只重排一次），
                 // 同时保证课程开关/名称/教室等编辑后立即同步到已排闹钟。
+                // key 必须覆盖排课的全部输入：除课程数据外还包括起止日期/总周数/节次时间，
+                // 否则单独修改这些设置不会重排，旧闹钟会按旧时间触发。
                 // 无课表时同样要调用：scheduleUpcomingReminders 先 clearAll 再对 null id 早退，
                 // 跳过调用会让已删除课表的提醒留在系统里继续触发。
                 LaunchedEffect(uiState.isLoading) {
                     if (!uiState.isLoading) {
                         snapshotFlow {
-                            uiState.currentTimetableId to (uiState.courseInfos to uiState.sessions)
+                            listOf(
+                                uiState.currentTimetableId,
+                                uiState.currentStartDate,
+                                uiState.currentTotalWeeks,
+                                uiState.currentSessionTimes,
+                                uiState.courseInfos,
+                                uiState.sessions
+                            )
                         }
                             .debounce(500)
                             .collect {
@@ -472,6 +491,24 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 }
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        // 授予通知权限后立即重排：scheduler 在无权限时只做了 clearAll 就早退，
+        // 不补这一步的话，同会话内授予后要等下次冷启动才真正排上提醒
+        if (requestCode == REQUEST_CODE_POST_NOTIFICATIONS &&
+            grantResults.isNotEmpty() &&
+            grantResults[0] == PackageManager.PERMISSION_GRANTED
+        ) {
+            lifecycleScope.launch {
+                ReminderBootstrapper.rescheduleCurrentTimetable(applicationContext)
             }
         }
     }

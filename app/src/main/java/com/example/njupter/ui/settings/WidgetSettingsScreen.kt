@@ -41,6 +41,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,6 +64,7 @@ import com.example.njupter.widget.ui.WidgetLightColors
 import com.example.njupter.widget.ui.getColorForIndex
 import java.io.File
 import java.io.FileOutputStream
+import kotlinx.coroutines.launch
 
 private const val WIDGET_BG_FILE = "widget_background.jpg"
 private const val MAX_BG_DIMENSION = 1600
@@ -73,6 +75,7 @@ fun WidgetSettingsScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var backgroundPath by remember { mutableStateOf(WidgetSettingsManager.getBackgroundImagePath(context)) }
     var transparency by remember { mutableFloatStateOf(WidgetSettingsManager.getBackgroundTransparency(context) / 255f) }
 
@@ -94,7 +97,7 @@ fun WidgetSettingsScreen(
         } else {
             backgroundPath = savedPath
             WidgetSettingsManager.setBackgroundImagePath(context, savedPath)
-            WidgetDataManager.refreshWidget(context)
+            scope.launch { WidgetDataManager.refreshWidget(context) }
         }
     }
 
@@ -165,7 +168,7 @@ fun WidgetSettingsScreen(
                             deleteBackgroundImage(context)
                             backgroundPath = null
                             WidgetSettingsManager.setBackgroundImagePath(context, null)
-                            WidgetDataManager.refreshWidget(context)
+                            scope.launch { WidgetDataManager.refreshWidget(context) }
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.error
@@ -215,7 +218,7 @@ fun WidgetSettingsScreen(
                     WidgetSettingsManager.setBackgroundTransparency(context, alphaInt)
                 },
                 onValueChangeFinished = {
-                    WidgetDataManager.refreshWidget(context)
+                    scope.launch { WidgetDataManager.refreshWidget(context) }
                 }
             )
 
