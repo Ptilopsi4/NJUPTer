@@ -178,6 +178,13 @@ fun SettingsScreen(
                 }
             }
         ),
+        SettingsItem.Navigation(
+            icon = SettingsIcon.Vector(Icons.Default.Timer),
+            title = stringResource(R.string.reminder_lead_time),
+            description = stringResource(R.string.reminder_lead_time_summary),
+            value = stringResource(R.string.reminder_lead_min_value, reminderLeadMinutes),
+            onClick = { showReminderLeadDialog = true }
+        ),
     )
 
     // 提醒链路：豁免 + 精确闹钟配合，确保息屏/待机时提醒准时
@@ -221,13 +228,6 @@ fun SettingsScreen(
                     Toast.makeText(context, R.string.cannot_open_settings, Toast.LENGTH_SHORT).show()
                 }
             }
-        ),
-        SettingsItem.Navigation(
-            icon = SettingsIcon.Vector(Icons.Default.Timer),
-            title = stringResource(R.string.reminder_lead_time),
-            description = stringResource(R.string.reminder_lead_time_summary),
-            value = stringResource(R.string.reminder_lead_min_value, reminderLeadMinutes),
-            onClick = { showReminderLeadDialog = true }
         )
     )
 
@@ -351,20 +351,8 @@ private fun openBatteryOptimizationSettings(context: android.content.Context): B
     return startActivitySafely(context, finalFallbackIntent)
 }
 
-/**
- * 厂商"后台高耗电/后台运行"页没有公开 API，只能跳转。
- * 组件名随 ROM 版本变化，逐个尝试，失败最终降级到应用详情页由用户手动进入。
- */
 private fun openBackgroundHighPowerSettings(context: android.content.Context): Boolean {
-    val vendorTargets = listOf(
-        "com.vivo.abe" to "com.vivo.abe.ExcludedPowerDetailActivity",
-        "com.coloros.batterycomponent" to "com.coloros.batterycomponent.ui.BatteryActivity",
-        "com.miui.powerkeeper" to "com.miui.powerkeeper.ui.HiddenAppsConfigActivity",
-        "com.huawei.systemmanager" to "com.huawei.systemmanager.startupmgr.ui.StartupNormalAppListActivity"
-    )
-    for ((pkg, cls) in vendorTargets) {
-        if (startActivitySafely(context, Intent().setClassName(pkg, cls))) return true
-    }
+    // 后台高耗电是 ROM 专属设置，无公开 API，只能引导用户到应用详情页手动开启
     val fallbackIntent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
         data = Uri.parse("package:${context.packageName}")
     }
