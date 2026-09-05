@@ -44,15 +44,17 @@ object WidgetDataManager {
     /**
      * 重算 widget 状态并按需刷新。
      * 计算/读盘部分下沉到 IO 线程（调用方可能在主线程）；
-     * 可视内容（课程/星期/周数等）未变时只补写 nextRefresh 时间戳，不重组 Glance，
-     * 避免切周次、改设置等无关变更触发全量 updateAll。
+     * 可视内容（课程/星期/周数等）未变时只补写 nextRefresh 时间戳，不重组 Glance。
+     * 可见性比较必须先抹掉 nextRefreshAtMillis，否则时间戳差异会被误判为内容变化。
      */
     suspend fun refreshWidget(context: Context) = withContext(Dispatchers.IO) {
         val newState = WidgetModels.computeWidgetDisplayState(context)
         val previous = loadWidgetState(context)
         try {
+            val visibleChanged =
+                previous.copy(nextRefreshAtMillis = null) != newState.copy(nextRefreshAtMillis = null)
             when {
-                previous != newState -> {
+                visibleChanged -> {
                     saveWidgetState(context, newState)
                     CourseWidget().updateAll(context)
                 }

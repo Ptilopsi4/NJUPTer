@@ -1,5 +1,6 @@
 package com.example.njupter.widget.ui
 
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -9,6 +10,7 @@ import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
+import androidx.glance.LocalContext
 import androidx.glance.LocalSize
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.background
@@ -52,12 +54,12 @@ fun CoursesWidgetContent(
         else -> 4
     }
     val overlayAlpha = transparency.coerceIn(0, 255)
+    val context = LocalContext.current
+    val density = context.resources.displayMetrics.density
+    // 解码目标像素尺寸按 widget 实际大小估算，避免每次渲染全尺寸解码大图
+    val targetPx = (maxOf(size.width.value, size.height.value) * density).toInt().coerceAtLeast(1)
     val backgroundBitmap = backgroundImagePath?.let { path ->
-        try {
-            BitmapFactory.decodeFile(path)
-        } catch (_: Exception) {
-            null
-        }
+        decodeSampled(path, targetPx)
     }
 
     WidgetTheme(colors = colors) {
@@ -116,6 +118,28 @@ fun CoursesWidgetContent(
                 }
             }
         }
+    }
+}
+
+/**
+ * 采样解码背景图，使最长边落在 [targetPx] 的 1–2 倍内。
+ * OOM 是 Error 不是 Exception，必须捕 Throwable 才能避免崩掉 widget 更新。
+ */
+private fun decodeSampled(path: String, targetPx: Int): Bitmap? {
+    return try {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(path, bounds)
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+        var sample = 1
+        while (
+            bounds.outWidth / (sample * 2) >= targetPx ||
+            bounds.outHeight / (sample * 2) >= targetPx
+        ) {
+            sample *= 2
+        }
+        BitmapFactory.decodeFile(path, BitmapFactory.Options().apply { inSampleSize = sample })
+    } catch (t: Throwable) {
+        null
     }
 }
 

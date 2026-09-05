@@ -55,14 +55,6 @@ object WidgetModels {
         }
     }
 
-    fun computeTodayWeekNumber(context: Context): Int? {
-        return computeWidgetDisplayState(context).weekNumber
-    }
-
-    fun computeTodaysCourses(context: Context): List<WidgetCourseEntry> {
-        return computeWidgetDisplayState(context).entries
-    }
-
     private fun emptyState(nowMillis: Long): WidgetDisplayState {
         return WidgetDisplayState(
             dayOfWeek = getDayOfWeek(nowMillis),
