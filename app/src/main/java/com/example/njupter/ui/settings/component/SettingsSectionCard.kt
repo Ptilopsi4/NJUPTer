@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -165,7 +166,7 @@ private fun SettingsSegment(
 
             when (item) {
                 is SettingsItem.Navigation -> {
-                    item.value?.takeIf { it.isNotBlank() }?.let { value ->
+                    item.value?.takeIf { it.isNotBlank() && !item.selected }?.let { value ->
                         Text(
                             text = value,
                             style = MaterialTheme.typography.bodyMedium,
@@ -175,14 +176,25 @@ private fun SettingsSegment(
                             modifier = Modifier.padding(start = 12.dp)
                         )
                     }
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier
-                            .padding(start = 4.dp)
-                            .size(20.dp)
-                    )
+                    if (item.selected) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .padding(start = 4.dp)
+                                .size(20.dp)
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .padding(start = 4.dp)
+                                .size(20.dp)
+                        )
+                    }
                 }
 
                 is SettingsItem.Toggle -> {

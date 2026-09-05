@@ -55,19 +55,19 @@ fun LanguageSelectScreen(
                             SettingsItem.Navigation(
                                 icon = SettingsIcon.Drawable(R.drawable.ic_language_follow),
                                 title = stringResource(R.string.language_system),
-                                value = if (isSystemSelected) "\u2713" else null,
+                                selected = isSystemSelected,
                                 onClick = { onSelectLanguage("system") }
                             ),
                             SettingsItem.Navigation(
                                 icon = SettingsIcon.Drawable(R.drawable.ic_language_cn),
                                 title = stringResource(R.string.language_zh),
-                                value = if (isZhSelected) "\u2713" else null,
+                                selected = isZhSelected,
                                 onClick = { onSelectLanguage("zh") }
                             ),
                             SettingsItem.Navigation(
                                 icon = SettingsIcon.Drawable(R.drawable.ic_language_us),
                                 title = stringResource(R.string.language_en),
-                                value = if (isEnSelected) "\u2713" else null,
+                                selected = isEnSelected,
                                 onClick = { onSelectLanguage("en") }
                             )
                         )
