@@ -34,33 +34,11 @@ import kotlinx.coroutines.launch
 fun CourseDetailsBottomSheet(
     course: CourseInfo,
     session: CourseSession,
-    sessionTimes: List<String>,
     onDismiss: () -> Unit,
     onEdit: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
-    val dayNames = listOf(
-        stringResource(R.string.day_mon),
-        stringResource(R.string.day_tue),
-        stringResource(R.string.day_wed),
-        stringResource(R.string.day_thu),
-        stringResource(R.string.day_fri),
-        stringResource(R.string.day_sat),
-        stringResource(R.string.day_sun)
-    )
-    val sectionDescription = if (session.startSection == session.endSection) {
-        stringResource(R.string.course_section_single, session.startSection)
-    } else {
-        stringResource(
-            R.string.course_section_range,
-            session.startSection,
-            session.endSection
-        )
-    }
-    val timeDescription = sessionTimeRange(session, sessionTimes)?.let { (start, end) ->
-        stringResource(R.string.course_time_range, start, end)
-    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -102,26 +80,16 @@ fun CourseDetailsBottomSheet(
                 label = stringResource(R.string.course_nature),
                 value = course.courseNature.ifBlank { stringResource(R.string.not_set) }
             )
+            CourseDetailRow(
+                label = stringResource(R.string.attendance_type),
+                value = course.attendanceType.ifBlank { stringResource(R.string.not_set) }
+            )
             if (course.note.isNotBlank()) {
                 CourseDetailRow(
                     label = stringResource(R.string.note),
                     value = course.note
                 )
             }
-            CourseDetailRow(
-                label = stringResource(R.string.day_of_week),
-                value = dayNames.getOrElse(session.day - 1) { session.day.toString() }
-            )
-            CourseDetailRow(
-                label = stringResource(R.string.session_times_label),
-                value = buildString {
-                    append(sectionDescription)
-                    if (timeDescription != null) {
-                        append(" · ")
-                        append(timeDescription)
-                    }
-                }
-            )
             CourseDetailRow(
                 label = stringResource(R.string.weeks),
                 value = formatWeekRanges(session.weeks)
@@ -166,17 +134,6 @@ private fun CourseDetailRow(label: String, value: String) {
             modifier = Modifier.weight(0.66f)
         )
     }
-}
-
-private fun sessionTimeRange(
-    session: CourseSession,
-    sessionTimes: List<String>
-): Pair<String, String>? {
-    val first = sessionTimes.getOrNull(session.startSection - 1) ?: return null
-    val last = sessionTimes.getOrNull(session.endSection - 1) ?: return null
-    val start = first.substringBefore('-').trim()
-    val end = last.substringAfter('-', missingDelimiterValue = "").trim()
-    return if (start.isNotEmpty() && end.isNotEmpty()) start to end else null
 }
 
 internal fun formatWeekRanges(weeks: List<Int>): String {

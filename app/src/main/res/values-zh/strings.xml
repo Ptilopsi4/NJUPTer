@@ -48,15 +48,14 @@
     <string name="customize">自定义</string>
     <string name="card_color">卡片颜色</string>
     <string name="auto">A</string>
-    <string name="save">保存</string>
     <string name="delete">删除</string>
+    <string name="delete_course">删除课程</string>
+    <string name="delete_course_title">删除该课程节次？</string>
+    <string name="delete_course_message">将删除该课程节次，删除后可通过撤销恢复。</string>
     <string name="unnamed_course">未命名课程</string>
     <string name="not_set">未设置</string>
     <string name="course_credit">学分</string>
     <string name="course_nature">课程性质</string>
-    <string name="course_section_single">第%1$d节</string>
-    <string name="course_section_range">第%1$d–%2$d节</string>
-    <string name="course_time_range">%1$s–%2$s</string>
 
     <!-- Week Picker Dialog -->
     <string name="select_weeks">选择周次</string>

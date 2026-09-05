@@ -48,15 +48,14 @@
     <string name="customize">Customize</string>
     <string name="card_color">Card Color</string>
     <string name="auto">A</string>
-    <string name="save">Save</string>
     <string name="delete">Delete</string>
+    <string name="delete_course">Delete Course</string>
+    <string name="delete_course_title">Delete this course session?</string>
+    <string name="delete_course_message">This will remove this course session. You can undo this afterwards.</string>
     <string name="unnamed_course">Unnamed course</string>
     <string name="not_set">Not set</string>
     <string name="course_credit">Credits</string>
     <string name="course_nature">Course type</string>
-    <string name="course_section_single">Section %1$d</string>
-    <string name="course_section_range">Sections %1$d–%2$d</string>
-    <string name="course_time_range">%1$s–%2$s</string>
 
     <!-- Week Picker Dialog -->
     <string name="select_weeks">Select Weeks</string>

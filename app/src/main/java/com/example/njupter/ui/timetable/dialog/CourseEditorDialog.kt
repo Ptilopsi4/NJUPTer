@@ -17,6 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -138,6 +139,7 @@ fun CourseEditorDialog(
     }
 
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
 
     // 描边颜色
     val outlineColor = MaterialTheme.colorScheme.outline
@@ -190,7 +192,9 @@ fun CourseEditorDialog(
                 selectedWeeks = selectedWeeks,
                 showCustomWeekDialog = showCustomWeekDialog,
                 onCustomWeekClick = { showCustomWeekDialog = true },
-                errorMessage = errorMessage
+                errorMessage = errorMessage,
+                showDelete = initialSession != null,
+                onDeleteClick = { showDeleteConfirm = true }
             )
         },
         confirmButton = {
@@ -264,11 +268,28 @@ fun CourseEditorDialog(
             }) { Text(stringResource(R.string.save_btn)) }
         },
         dismissButton = {
-            if (initialSession != null) {
-                TextButton(onClick = onDelete) { Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error) }
-            }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         }
     )
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text(stringResource(R.string.delete_course_title)) },
+            text = { Text(stringResource(R.string.delete_course_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteConfirm = false
+                    onDelete()
+                }) { Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -300,7 +321,9 @@ private fun CourseEditorForm(
     selectedWeeks: Set<Int>,
     showCustomWeekDialog: Boolean,
     onCustomWeekClick: () -> Unit,
-    errorMessage: String?
+    errorMessage: String?,
+    showDelete: Boolean = false,
+    onDeleteClick: () -> Unit = {}
 ) {
     val outlineColor = MaterialTheme.colorScheme.outline
     val primaryColor = MaterialTheme.colorScheme.primary
@@ -563,6 +586,23 @@ private fun CourseEditorForm(
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(top = 8.dp))
+        }
+
+        // 删除入口放在表单底部，与主操作区（取消/保存）分离，避免误触
+        if (showDelete) {
+            HorizontalDivider(Modifier.padding(10.dp, vertical = 10.dp))
+            TextButton(
+                onClick = onDeleteClick,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Delete,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(4.dp))
+                Text(stringResource(R.string.delete_course), color = MaterialTheme.colorScheme.error)
+            }
         }
     }
 }
