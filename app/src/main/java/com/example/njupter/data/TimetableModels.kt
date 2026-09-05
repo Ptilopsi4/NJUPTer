@@ -57,7 +57,8 @@ internal data class CourseInfoJson(
     val credit: String? = null,
     val courseNature: String? = null,
     val note: String? = null,
-    val attendanceType: String? = null
+    val attendanceType: String? = null,
+    val reminderEnabled: Boolean? = null
 )
 
 internal data class CourseSessionJson(

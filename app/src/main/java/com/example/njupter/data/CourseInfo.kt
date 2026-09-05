@@ -8,5 +8,6 @@ data class CourseInfo(
     val credit: String = "",
     val courseNature: String = "",
     val note: String = "",
-    val attendanceType: String = ""
+    val attendanceType: String = "",
+    val reminderEnabled: Boolean = false    // 是否为该课安排上课提醒（默认关闭）
 )

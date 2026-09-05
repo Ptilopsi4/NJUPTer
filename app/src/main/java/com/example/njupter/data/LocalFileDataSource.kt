@@ -108,7 +108,8 @@ class LocalFileDataSource(private val context: Context) : TimetableDataSource {
                         credit = it.credit.orEmpty(),
                         courseNature = it.courseNature.orEmpty(),
                         note = it.note.orEmpty(),
-                        attendanceType = it.attendanceType.orEmpty()
+                        attendanceType = it.attendanceType.orEmpty(),
+                        reminderEnabled = it.reminderEnabled ?: true    // 旧数据默认开启提醒
                     )
                 }
                 val domainSessions = root.sessions.map {
@@ -141,7 +142,8 @@ class LocalFileDataSource(private val context: Context) : TimetableDataSource {
                     credit = it.credit,
                     courseNature = it.courseNature,
                     note = it.note,
-                    attendanceType = it.attendanceType
+                    attendanceType = it.attendanceType,
+                    reminderEnabled = it.reminderEnabled
                 )
             },
             sessions = data.sessions.map {
