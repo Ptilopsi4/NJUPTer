@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Build
 import android.app.Activity
+import android.util.Log
 import android.view.animation.DecelerateInterpolator
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -198,6 +199,7 @@ class MainActivity : ComponentActivity() {
                     importState.result?.let { result ->
                         ImportPreviewDialog(
                             importResult = result,
+                            semesterRange = importState.semesterRange,
                             onConfirm = { name, startDate, totalWeeks ->
                                 viewModel.createAndImportTimetable(
                                     name = name,
@@ -282,6 +284,10 @@ class MainActivity : ComponentActivity() {
                             JwxtImportScreen(
                                 isActive = showJwxtImport,
                                 onBack = { showJwxtImport = false },
+                                onSemesterInfoObtained = { range ->
+                                    Log.d("JwxtImport", "semester range received: $range")
+                                    viewModel.setSemesterRange(range)
+                                },
                                 onTimetableHtmlObtained = { html ->
                                     viewModel.processTimetableImport(html)
                                 }

@@ -10,6 +10,7 @@ import com.example.njupter.data.SettingsRepository
 import com.example.njupter.data.TimetableMetadata
 import com.example.njupter.data.TimetableRepository
 import com.example.njupter.data.import.JwxtParser
+import com.example.njupter.data.import.SemesterRange
 import com.example.njupter.domain.getTodayWeekIndex
 import com.example.njupter.domain.import.TimetableImportMatcher
 import kotlinx.coroutines.Dispatchers
@@ -145,7 +146,8 @@ class TimetableViewModel(
     data class ImportState(
         val isImporting: Boolean = false,
         val result: TimetableImportMatcher.ImportResult? = null,
-        val error: String? = null
+        val error: String? = null,
+        val semesterRange: SemesterRange? = null
     )
 
     private data class TimetableBundle(
@@ -162,7 +164,8 @@ class TimetableViewModel(
 
     fun processTimetableImport(html: String) {
         viewModelScope.launch(Dispatchers.Default) {
-            _importState.value = ImportState(isImporting = true)
+            val semesterRange = _importState.value.semesterRange
+            _importState.value = ImportState(isImporting = true, semesterRange = semesterRange)
             try {
                 val parser = JwxtParser()
                 val remoteCourses = parser.parseHtml(html)
@@ -172,11 +175,16 @@ class TimetableViewModel(
                 // For a new timetable, we match against empty lists to treat all courses as new
                 val result = matcher.matchAndConvert(remoteCourses, emptyList(), emptyList())
                 
-                _importState.value = ImportState(result = result)
+                _importState.value = ImportState(result = result, semesterRange = semesterRange)
             } catch (e: Exception) {
-                _importState.value = ImportState(error = e.message ?: "Unknown error")
+                _importState.value = ImportState(error = e.message ?: "Unknown error", semesterRange = semesterRange)
             }
         }
+    }
+
+    /** 课表 HTML 到达前，主页日历 widget 已先行解析出学期起止信息。 */
+    fun setSemesterRange(range: SemesterRange?) {
+        _importState.value = _importState.value.copy(semesterRange = range)
     }
 
     fun clearImportState() {

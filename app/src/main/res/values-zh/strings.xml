@@ -118,6 +118,7 @@
     <string name="import_preview">导入预览</string>
     <string name="import_failed">导入失败</string>
     <string name="imported_timetable_name">导入的课表</string>
+    <string name="import_semester_autofilled">已按教务主页校历自动填充，可修改</string>
     <string name="new_timetable_name">新课表名称</string>
     <string name="import_desc">将为你自动创建一个全新的课表。</string>
     <string name="create_and_import">创建并导入</string>
