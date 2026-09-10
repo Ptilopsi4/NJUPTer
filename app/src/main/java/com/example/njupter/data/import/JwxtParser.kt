@@ -27,37 +27,51 @@ class JwxtParser {
         val document = Jsoup.parse(html)
         val courses = mutableListOf<RemoteCourse>()
 
-        // 新系统同时输出网格与列表。列表没有网格中的 rowspan 列偏移问题，
-        // 并且字段带有稳定标签，更适合做数据导入。
+        // 列表字段带有稳定标签，但节次单元格也可能通过 rowspan 覆盖多条课程行。
         val table = document.getElementById("kblist_table")
             ?: throw IllegalArgumentException("未找到课表数据，请确认统一认证已经完成")
 
         var currentDay = -1
-        var currentSlot: Pair<Int, Int>? = null
+        var currentSections = -1 to -1
+        var remainingSectionRows = 0
+        var currentRowGroup: Element? = null
         for (row in table.select("tr")) {
+            // rowspan 不能跨 tbody；缺少节次的孤立行不能借用上一组的节次。
+            if (row.parent() !== currentRowGroup) {
+                currentRowGroup = row.parent()
+                currentDay = -1
+                remainingSectionRows = 0
+            }
             row.selectFirst("span.week")?.text()?.let { dayText ->
                 currentDay = parseDay(dayText)
+                remainingSectionRows = 0
             }
 
-            // 同一格的第二门课（单双周、1-8/9-18 分段）与第一门共用 rowspan 的
-            // 节次单元格，其所在行没有 span.festival；此时沿用上一行的槽位，
-            // 否则第二门课会被整行跳过。
-            row.selectFirst("span.festival")?.text()?.let { sectionText ->
-                val (startSection, endSection) = parseSections(sectionText)
-                if (startSection != -1) currentSlot = startSection to endSection
+            val festival = row.selectFirst("span.festival")
+            if (festival != null) {
+                currentSections = parseSections(festival.text())
+                val span = festival.closest("td, th")?.attr("rowspan")?.toIntOrNull() ?: 1
+                remainingSectionRows = if (span == 0) {
+                    // HTML rowspan=0 表示覆盖当前行组的剩余行
+                    row.parent()?.children()?.count { it.tagName() == "tr" && it.elementSiblingIndex() >= row.elementSiblingIndex() } ?: 1
+                } else {
+                    span.coerceAtLeast(1)
+                }
             }
-            val slot = currentSlot ?: continue
-            if (currentDay == -1) continue
+            if (remainingSectionRows <= 0) continue
+            remainingSectionRows--
+            val (startSection, endSection) = currentSections
+            if (currentDay == -1 || startSection == -1) continue
 
             for (block in row.select("div.timetable_con")) {
                 // 红色斜体是“待筛选”课程，不属于已经选上的课表。
-                val titleColor = block.selectFirst("span.title font")
+                val titleColor = block.selectFirst(".title font")
                     ?.attr("color")
                     ?.trim()
                     ?.lowercase()
                 if (titleColor == "red") continue
 
-                parseCourseBlock(block, currentDay, slot.first, slot.second)
+                parseCourseBlock(block, currentDay, startSection, endSection)
                     ?.let(courses::add)
             }
         }
@@ -71,7 +85,7 @@ class JwxtParser {
         startSection: Int,
         endSection: Int
     ): RemoteCourse? {
-        val name = block.selectFirst("span.title")
+        val name = block.selectFirst(".title")
             ?.text()
             ?.cleanDisplayText()
             .orEmpty()
@@ -147,25 +161,28 @@ class JwxtParser {
                     .findAll(part)
                     .mapNotNull { it.value.toIntOrNull() }
                     .toList()
-                when {
+                val partWeeks = when {
                     bounds.size >= 2 -> {
                         val start = bounds.first()
                         val end = bounds.last()
                         if (start in 1..MAX_WEEK && end in start..MAX_WEEK) {
-                            allWeeks.addAll(start..end)
-                        }
+                            (start..end).toList()
+                        } else emptyList()
                     }
                     bounds.size == 1 && bounds.first() in 1..MAX_WEEK -> {
-                        allWeeks.add(bounds.first())
+                        listOf(bounds.first())
                     }
+                    else -> emptyList()
                 }
+                // 单双周只作用于当前逗号分段，例如 1-3周(单),4-18周。
+                allWeeks.addAll(when {
+                    part.contains("单") && !part.contains("双") -> partWeeks.filter { it % 2 == 1 }
+                    part.contains("双") && !part.contains("单") -> partWeeks.filter { it % 2 == 0 }
+                    else -> partWeeks
+                })
             }
 
-        return when {
-            normalized.contains("单") && !normalized.contains("双") -> allWeeks.filter { it % 2 == 1 }
-            normalized.contains("双") && !normalized.contains("单") -> allWeeks.filter { it % 2 == 0 }
-            else -> allWeeks.toList()
-        }
+        return allWeeks.sorted()
     }
 
     private fun String.cleanDisplayText(): String =
