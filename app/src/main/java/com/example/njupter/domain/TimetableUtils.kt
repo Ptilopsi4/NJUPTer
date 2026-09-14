@@ -1,25 +1,7 @@
-// 根据星期和节次查找对应课程
 package com.example.njupter.domain
 
-import com.example.njupter.data.CourseInfo
-import com.example.njupter.data.CourseSession
 import java.util.Calendar
 import java.util.TimeZone
-
-// TODO:给定(day, section)，找到对应的课程信息
-fun getCourseAt(
-    sessions: List<CourseSession>,
-    courseMap: Map<String, CourseInfo>,
-    day: Int,
-    section: Int
-): CourseInfo? {
-
-    val session = sessions.find {
-        it.day == day && section in it.startSection..it.endSection
-    }
-
-    return session?.let { courseMap[it.courseId] }
-}
 
 private val dateFormatLocal = ThreadLocal.withInitial {
     java.text.SimpleDateFormat("MM/dd", java.util.Locale.getDefault())

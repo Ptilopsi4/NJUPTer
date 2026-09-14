@@ -23,7 +23,7 @@ data class TimetableMetadata(
     val id: String,
     val name: String,
     val lastModified: Long,
-    val startDate: Long = System.currentTimeMillis(),   // TODO: 需要在创建/编辑界面提供选择，后续版本考虑从校历自动计算
+    val startDate: Long = System.currentTimeMillis(),
     val totalWeeks: Int = 20,
     val sessionTimes: List<String>? = null,
     val showWeekends: Boolean = true
