@@ -635,11 +635,11 @@ fun CustomWeekPickerDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                     ) {
-                        Text(   //TODO:M3强调效果
+                        Text(
                             text = stringResource(R.string.at_least_one_week),
                             modifier = Modifier.padding(12.dp),
                             color = MaterialTheme.colorScheme.onErrorContainer,
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.labelLarge
                         )
                     }
                 }
