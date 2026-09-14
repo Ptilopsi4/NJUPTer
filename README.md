@@ -58,6 +58,17 @@ NJUPTer 是一个面向南京邮电大学学生的 Android 课程表应用，使
 - 提取课程名、教师、地点、星期、节次、周次等信息
 - 导入前提供预览，并以新课表形式落地
 
+### 桌面小组件
+
+- 展示今天（晚间自动切换为明天）的课程列表，超出高度可滚动
+- 可固定到桌面，按实例自定义背景图、纯色与透明度
+- 午夜自动刷新，课表数据变更后同步更新
+
+### 上课提醒
+
+- 按当前课表与提前量排定上课提醒通知
+- 开机、系统时间变更、应用更新后自动重新排程
+
 ## 界面结构
 
 应用当前主要分为两个一级页面：
@@ -72,6 +83,8 @@ NJUPTer 是一个面向南京邮电大学学生的 Android 课程表应用，使
 - Kotlin
 - Jetpack Compose
 - Material 3
+- Glance（桌面小组件）
+- WorkManager
 - Kotlin Coroutines + Flow
 - Gson
 - OkHttp
@@ -86,6 +99,9 @@ app/src/main/java/com/example/njupter/
 |- data/           数据源、仓库、模型、导入相关实现
 |- domain/         日期计算、导入匹配等领域逻辑
 |- ui/             Compose 页面、弹窗、组件
+|- viewmodels/     ViewModel
+|- widget/         桌面小组件（Glance）
+|- notification/   上课提醒
 |- MainActivity.kt 应用入口与页面装配
 ```
 
@@ -93,13 +109,14 @@ app/src/main/java/com/example/njupter/
 
 - `app/src/main/java/com/example/njupter/data/FileTimetableRepository.kt`：内存状态持有、课表初始化、课表切换、文件同步
 - `app/src/main/java/com/example/njupter/data/LocalFileDataSource.kt`：课表索引与课表内容的本地文件读写
-- `app/src/main/java/com/example/njupter/ui/TimetableScreen.kt`：主课表页面
-- `app/src/main/java/com/example/njupter/ui/TimetableViewModel.kt`：组合 UI 状态并驱动页面
-- `app/src/main/java/com/example/njupter/ui/TimetableConfigDialog.kt`：新建/编辑课表配置
-- `app/src/main/java/com/example/njupter/ui/import/JwxtImportScreen.kt`：教务系统登录流程
+- `app/src/main/java/com/example/njupter/ui/timetable/TimetableScreen.kt`：主课表页面
+- `app/src/main/java/com/example/njupter/viewmodels/TimetableViewModel.kt`：组合 UI 状态并驱动页面
+- `app/src/main/java/com/example/njupter/ui/timetable/dialog/TimetableConfigDialog.kt`：新建/编辑课表配置
+- `app/src/main/java/com/example/njupter/ui/settings/SettingsImportScreen.kt`：教务系统登录流程
 - `app/src/main/java/com/example/njupter/data/import/JwxtClient.kt`：请求教务系统页面
 - `app/src/main/java/com/example/njupter/data/import/JwxtParser.kt`：解析课表 HTML
 - `app/src/main/java/com/example/njupter/domain/import/TimetableImportMatcher.kt`：把导入结果转换为本地模型
+- `app/src/main/java/com/example/njupter/widget/ui/WidgetLayouts.kt`：小组件布局与渲染
 
 ## 数据存储方式
 
@@ -113,7 +130,7 @@ app/src/main/java/com/example/njupter/
 ## 运行环境
 
 - Android Studio
-- JDK 11
+- JDK 17 及以上（AGP 9 要求，可用 Android Studio 自带 JBR）
 - Android SDK
 - Android 模拟器或真机
 
@@ -154,7 +171,7 @@ macOS / Linux:
 
 ### CI 自动构建与 Artifacts
 
-项目已包含 GitHub Actions 工作流：`.github/workflows/android-ci.yml`。
+项目已包含 GitHub Actions 工作流：`.github/workflows/android.yml`。
 
 - Push / Pull Request / 手动触发（workflow_dispatch）会自动构建 Debug APK，并上传到 Actions Artifacts
 - 打 `v*` 标签（例如 `v1.0.0`）会自动构建 Release APK + AAB，并上传 Artifacts
@@ -192,7 +209,6 @@ git push origin v1.0.0
 
 - 本地导出与导入课表文件
 - 课表备份与恢复
-- 小组件支持
 - 更完善的导入错误提示与异常恢复
 - 冲突检测与更智能的合并策略
 - 更完整的自动化测试
@@ -263,6 +279,17 @@ It is intentionally lightweight, stores data locally, and is also suitable as a 
 - extract course name, teacher, classroom, weekday, sections, and weeks
 - preview the imported result before creating a new timetable
 
+### Home Screen Widget
+
+- shows today's courses (automatically switches to tomorrow in the evening) in a scrollable list
+- can be pinned to the home screen with per-instance background image, solid color, and transparency
+- refreshes automatically at midnight and after timetable data changes
+
+### Class Reminders
+
+- schedules class reminder notifications from the current timetable with a configurable lead time
+- reschedules automatically after boot, time changes, and app updates
+
 ## App Structure
 
 The app currently has two primary top-level pages:
@@ -277,6 +304,8 @@ The JWXT import flow is presented as a separate screen, followed by a preview di
 - Kotlin
 - Jetpack Compose
 - Material 3
+- Glance (home screen widget)
+- WorkManager
 - Kotlin Coroutines + Flow
 - Gson
 - OkHttp
@@ -291,6 +320,9 @@ app/src/main/java/com/example/njupter/
 |- data/           data sources, repository, models, import implementation
 |- domain/         date calculation and import matching logic
 |- ui/             Compose screens, dialogs, and components
+|- viewmodels/     ViewModels
+|- widget/         home screen widget (Glance)
+|- notification/   class reminders
 |- MainActivity.kt app entry and screen composition
 ```
 
@@ -298,13 +330,14 @@ Key files:
 
 - `app/src/main/java/com/example/njupter/data/FileTimetableRepository.kt`
 - `app/src/main/java/com/example/njupter/data/LocalFileDataSource.kt`
-- `app/src/main/java/com/example/njupter/ui/TimetableScreen.kt`
-- `app/src/main/java/com/example/njupter/ui/TimetableViewModel.kt`
-- `app/src/main/java/com/example/njupter/ui/TimetableConfigDialog.kt`
-- `app/src/main/java/com/example/njupter/ui/import/JwxtImportScreen.kt`
+- `app/src/main/java/com/example/njupter/ui/timetable/TimetableScreen.kt`
+- `app/src/main/java/com/example/njupter/viewmodels/TimetableViewModel.kt`
+- `app/src/main/java/com/example/njupter/ui/timetable/dialog/TimetableConfigDialog.kt`
+- `app/src/main/java/com/example/njupter/ui/settings/SettingsImportScreen.kt`
 - `app/src/main/java/com/example/njupter/data/import/JwxtClient.kt`
 - `app/src/main/java/com/example/njupter/data/import/JwxtParser.kt`
 - `app/src/main/java/com/example/njupter/domain/import/TimetableImportMatcher.kt`
+- `app/src/main/java/com/example/njupter/widget/ui/WidgetLayouts.kt`
 
 ## Data Storage
 
@@ -320,7 +353,7 @@ This keeps the implementation simple and transparent, but also means data stays 
 ## Requirements
 
 - Android Studio
-- JDK 11
+- JDK 17 or later (required by AGP 9; Android Studio's bundled JBR works)
 - Android SDK
 - Android emulator or physical device
 
@@ -384,7 +417,6 @@ To verify Kotlin compilation only:
 
 - local timetable export/import
 - backup and restore
-- home screen widgets
 - better import error handling and recovery
 - conflict detection and smarter merge behavior
 - broader automated test coverage
