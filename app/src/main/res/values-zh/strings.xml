@@ -156,6 +156,11 @@
     <string name="reminder_lead_empty_hint">未选择任何提前量，将不提醒</string>
     <string name="reminder_lead_add">添加该提前量</string>
     <string name="reminder_lead_disabled">已关闭</string>
+    <string name="about">关于</string>
+    <string name="about_description">面向南邮学生的轻量本地课程表应用。</string>
+    <string name="about_version">版本 %1$s</string>
+    <string name="about_project_home">项目主页</string>
+    <string name="about_open_link_failed">无法打开链接</string>
     <string name="minutes_unit">分钟</string>
     <string name="course_reminder_toggle">上课提醒</string>
     <string name="course_reminder_toggle_summary">上课前通知该课程</string>

@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.BatterySaver
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
@@ -65,7 +66,8 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onExactAlarmsEnabled: () -> Unit = {},
     reminderLeadMinutesList: List<Int> = listOf(SettingsRepository.DEFAULT_REMINDER_LEAD_MINUTES),
-    onReminderLeadMinutesChange: (List<Int>) -> Unit = {}
+    onReminderLeadMinutesChange: (List<Int>) -> Unit = {},
+    onAboutClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
     // 语言覆写后 LocalContext 可能不是 Activity，跳系统设置必须用真 Activity
@@ -251,6 +253,16 @@ fun SettingsScreen(
         SettingsSection(
             title = stringResource(R.string.reminder_reliability),
             items = reminderReliabilityItems
+        ),
+        SettingsSection(
+            title = stringResource(R.string.about),
+            items = listOf(
+                SettingsItem.Navigation(
+                    icon = SettingsIcon.Vector(Icons.Default.Info),
+                    title = stringResource(R.string.about),
+                    onClick = onAboutClick
+                )
+            )
         )
     )
 

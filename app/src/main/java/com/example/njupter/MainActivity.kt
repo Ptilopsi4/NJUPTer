@@ -49,6 +49,7 @@ import com.example.njupter.viewmodels.TimetableViewModel
 import com.example.njupter.data.LocalFileDataSource
 import com.example.njupter.data.SharedPreferencesSettingsRepository
 import com.example.njupter.ui.settings.LanguageSelectScreen
+import com.example.njupter.ui.settings.AboutScreen
 import com.example.njupter.ui.settings.SettingsScreen
 import com.example.njupter.ui.settings.TimetableSettingsScreen
 import com.example.njupter.ui.settings.ThemeSettingsScreen
@@ -456,6 +457,11 @@ class MainActivity : ComponentActivity() {
                                                     onBack = { settingsSubPage = "main" }
                                                 )
                                             }
+                                            subPage == "about" -> {
+                                                AboutScreen(
+                                                    onBack = { settingsSubPage = "main" }
+                                                )
+                                            }
                                             else -> {
                                                 SettingsScreen(
                                                     currentTimetableId = uiState.currentTimetableId,
@@ -468,6 +474,7 @@ class MainActivity : ComponentActivity() {
                                                     onLanguageSelectClick = { settingsSubPage = "language" },
                                                     onTimetableSettingsClick = { settingsSubPage = "timetable" },
                                                     onWidgetSettingsClick = { settingsSubPage = "widget" },
+                                                    onAboutClick = { settingsSubPage = "about" },
                                                     onToggleCurrentTimeIndicator = { enabled ->
                                                         scope.launch {
                                                             settingsRepository.setEnableCurrentTimeIndicator(enabled)

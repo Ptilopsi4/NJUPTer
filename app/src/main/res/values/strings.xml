@@ -157,6 +157,11 @@
     <string name="reminder_lead_empty_hint">Nothing selected — reminders are off</string>
     <string name="reminder_lead_add">Add this lead time</string>
     <string name="reminder_lead_disabled">Off</string>
+    <string name="about">About</string>
+    <string name="about_description">A lightweight, local-first timetable app for NJUPT students.</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_project_home">Project home</string>
+    <string name="about_open_link_failed">Couldn\'t open the link</string>
     <string name="minutes_unit">min</string>
     <string name="course_reminder_toggle">Class reminder</string>
     <string name="course_reminder_toggle_summary">Notify before this course starts</string>
