@@ -16,7 +16,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -32,7 +31,6 @@ import com.example.njupter.data.CourseInfo
 import com.example.njupter.data.CourseSession
 import com.example.njupter.domain.validation.CourseValidator
 import com.example.njupter.domain.validation.ValidationError
-import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import java.util.UUID
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -96,28 +94,6 @@ fun CourseEditorDialog(
         mutableStateOf((initialSession?.endSection ?: initialEndSection).toString())
     }
 
-    val unavailableWeeks = remember(
-        day,
-        startSection,
-        endSection,
-        initialSession,
-        existingSessions
-    ) {
-        val start = startSection.toIntOrNull()
-        val end = endSection.toIntOrNull()
-        if (start == null || end == null || start > end) {
-            emptySet()
-        } else {
-            CourseValidator.unavailableWeeksForSession(
-                day = day,
-                start = start,
-                end = end,
-                editingSession = initialSession,
-                allSessions = existingSessions
-            ).filterTo(mutableSetOf()) { it in 1..totalWeeks }
-        }
-    }
-
     // Weeks
     var selectedWeeks by remember(initialSession, initialWeeks, totalWeeks) {
         val requestedWeeks = initialSession?.weeks?.toSet() ?: initialWeeks
@@ -125,17 +101,18 @@ fun CourseEditorDialog(
             requestedWeeks.filterTo(mutableSetOf()) { it in 1..totalWeeks }
         )
     }
-    var automaticallyRemovedWeeks by remember(initialSession, initialWeeks, totalWeeks) {
-        mutableStateOf<Set<Int>>(emptySet())
-    }
     var showCustomWeekDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(unavailableWeeks) {
-        val newlyUnavailable = selectedWeeks intersect unavailableWeeks
-        val newlyAvailable = automaticallyRemovedWeeks - unavailableWeeks
-        selectedWeeks = (selectedWeeks - unavailableWeeks) + newlyAvailable
-        automaticallyRemovedWeeks =
-            (automaticallyRemovedWeeks + newlyUnavailable) intersect unavailableWeeks
+    // 按当前星期与所选周次算出已被占用的节次，供节次滑条高亮冲突；
+    // 冲突周次保留在选中集里由保存校验拦截，而不是静默剔除
+    val conflictingSections = remember(day, selectedWeeks, initialSession, existingSessions, maxSection) {
+        CourseValidator.conflictingSections(
+            day = day,
+            weeks = selectedWeeks,
+            editingSession = initialSession,
+            allSessions = existingSessions,
+            maxSection = maxSection
+        )
     }
 
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -149,13 +126,9 @@ fun CourseEditorDialog(
         CustomWeekPickerDialog(
             totalWeeks = totalWeeks,
             initialWeeks = selectedWeeks,
-            disabledWeeks = unavailableWeeks,
             onDismiss = { showCustomWeekDialog = false },
             onConfirm = {
                 selectedWeeks = it
-                // Confirming the picker is an explicit user choice. Do not restore weeks that
-                // were hidden by a previous, temporary time conflict after this point.
-                automaticallyRemovedWeeks = emptySet()
                 showCustomWeekDialog = false
             }
         )
@@ -192,6 +165,10 @@ fun CourseEditorDialog(
                 selectedWeeks = selectedWeeks,
                 showCustomWeekDialog = showCustomWeekDialog,
                 onCustomWeekClick = { showCustomWeekDialog = true },
+                onWeekPresetClick = { odd ->
+                    selectedWeeks = (1..totalWeeks).filter { if (odd) it % 2 == 1 else it % 2 == 0 }.toSet()
+                },
+                conflictingSections = conflictingSections,
                 errorMessage = errorMessage,
                 showDelete = initialSession != null,
                 onDeleteClick = { showDeleteConfirm = true }
@@ -321,6 +298,8 @@ private fun CourseEditorForm(
     selectedWeeks: Set<Int>,
     showCustomWeekDialog: Boolean,
     onCustomWeekClick: () -> Unit,
+    onWeekPresetClick: (Boolean) -> Unit = {},
+    conflictingSections: Set<Int> = emptySet(),
     errorMessage: String?,
     showDelete: Boolean = false,
     onDeleteClick: () -> Unit = {}
@@ -462,31 +441,18 @@ private fun CourseEditorForm(
             }
         }
 
-        // 节次
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(stringResource(R.string.start_sec), style = MaterialTheme.typography.bodySmall)
-            Text(
-                stringResource(R.string.section_range, startSection, endSection),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = primaryColor
-            )
-            Text(stringResource(R.string.end_sec), style = MaterialTheme.typography.bodySmall)
-        }
+        // 节次：滑条上高亮与所选周次冲突的节次，压到冲突段时给出提示
         val startSecNum = (startSection.toIntOrNull() ?: 1).coerceIn(1, maxSection)
         val endSecNum = (endSection.toIntOrNull() ?: startSecNum).coerceIn(startSecNum, maxSection)
-        val currentSectionRange = startSecNum.toFloat()..endSecNum.toFloat()
-        RangeSlider(
-            value = currentSectionRange,
-            onValueChange = { range: ClosedFloatingPointRange<Float> ->
-                onStartSectionChange(range.start.roundToInt().toString())
-                onEndSectionChange(range.endInclusive.roundToInt().toString())
-            },
-            valueRange = 1f..maxSection.toFloat(),
-            steps = (maxSection - 2).coerceAtLeast(0)
+        SectionRangePicker(
+            startSection = startSecNum,
+            endSection = endSecNum,
+            maxSection = maxSection,
+            conflictingSections = conflictingSections,
+            onRangeChange = { start, end ->
+                onStartSectionChange(start.toString())
+                onEndSectionChange(end.toString())
+            }
         )
 
         // 周次选择
@@ -494,17 +460,24 @@ private fun CourseEditorForm(
             stringResource(R.string.weeks, if (selectedWeeks.isEmpty()) stringResource(R.string.weeks_none) else stringResource(R.string.weeks_selected, selectedWeeks.size)),
             style = MaterialTheme.typography.bodySmall
         )
-        Row(
+        FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             SuggestionChip(
                 onClick = { onCustomWeekClick() },
                 label = { Text(stringResource(R.string.customize)) },
-                icon = { Icon(Icons.Default.DateRange, contentDescription = null, modifier = Modifier.size(18.dp)) },
                 colors = if (showCustomWeekDialog) SuggestionChipDefaults.suggestionChipColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant
                 ) else SuggestionChipDefaults.suggestionChipColors()
+            )
+            SuggestionChip(
+                onClick = { onWeekPresetClick(true) },
+                label = { Text(stringResource(R.string.odd_week)) }
+            )
+            SuggestionChip(
+                onClick = { onWeekPresetClick(false) },
+                label = { Text(stringResource(R.string.even_week)) }
             )
         }
 

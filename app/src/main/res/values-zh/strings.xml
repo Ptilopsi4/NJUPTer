@@ -42,6 +42,7 @@
     <string name="start_sec">开始节次</string>
     <string name="end_sec">结束节次</string>
     <string name="section_range">第 %1$s - %2$s 节</string>
+    <string name="section_conflict_blocked">所选节次存在冲突：%1$s。请调整节次或周次后保存。</string>
     <string name="weeks">周次</string>
     <string name="weeks_none">无</string>
     <string name="weeks_selected">已选</string>

@@ -74,6 +74,21 @@ object CourseValidator {
         return null
     }
 
+    /**
+     * Maps a day and week selection to the sections that are already occupied,
+     * clipped to [maxSection] so the slider can highlight exactly the blocked range.
+     */
+    fun conflictingSections(
+        day: Int,
+        weeks: Set<Int>,
+        editingSession: CourseSession?,
+        allSessions: List<CourseSession>,
+        maxSection: Int
+    ): Set<Int> = (1..maxSection).filterTo(mutableSetOf()) { section ->
+        val error = validateSessionInput(day, section, section, weeks.toList(), editingSession, allSessions)
+        error is ValidationError.TimeConflict
+    }
+
     private fun editingSessionIndex(
         editingSession: CourseSession?,
         allSessions: List<CourseSession>

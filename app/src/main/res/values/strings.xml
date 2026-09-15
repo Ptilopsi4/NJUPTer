@@ -42,6 +42,7 @@
     <string name="start_sec">Start Sec</string>
     <string name="end_sec">End Sec</string>
     <string name="section_range">Section %1$s - %2$s</string>
+    <string name="section_conflict_blocked">Conflicting sections: %1$s. Change sections or weeks before saving.</string>
     <string name="weeks">Weeks</string>
     <string name="weeks_none">None</string>
     <string name="weeks_selected">selected</string>
