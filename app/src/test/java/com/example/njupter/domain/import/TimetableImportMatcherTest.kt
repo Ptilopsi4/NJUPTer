@@ -39,7 +39,8 @@ class TimetableImportMatcherTest {
             day = 1,
             startSection = 1,
             endSection = 2,
-            weeks = listOf(1, 2)
+            weeks = listOf(1, 2),
+            classroom = "教3－300"
         )
 
         val result = matcher.matchAndConvert(
@@ -95,6 +96,89 @@ class TimetableImportMatcherTest {
         assertEquals(2, result.newCourses.size)
         assertEquals("教1-101", result.newSessions.first { it.weeks.first() == 1 }.classroom)
         assertEquals("教2-202", result.newSessions.first { it.weeks.first() == 2 }.classroom)
+    }
+
+    @Test
+    fun matchAndConvert_sameSlotDifferentRoomsStaysSplitByWeeks() {
+        // 同名同节次的单双周课换教室：教室各自跟着周次，不能并成一条丢教室
+        val result = matcher.matchAndConvert(
+            remoteCourses = listOf(
+                remote(name = "大学英语", weeks = (1..17).filter { it % 2 == 1 }, classroom = "教1-101"),
+                remote(name = "大学英语", weeks = (2..18).filter { it % 2 == 0 }, classroom = "教2-202")
+            ),
+            existingCourses = emptyList(),
+            existingSessions = emptyList()
+        )
+
+        assertEquals(1, result.newCourses.size)
+        assertEquals(2, result.newSessions.size)
+        val odd = result.newSessions.single { it.weeks.first() == 1 }
+        val even = result.newSessions.single { it.weeks.first() == 2 }
+        assertEquals("教1-101", odd.classroom)
+        assertEquals("教2-202", even.classroom)
+        assertEquals((1..17).filter { it % 2 == 1 }, odd.weeks)
+        assertEquals((2..18).filter { it % 2 == 0 }, even.weeks)
+    }
+
+    @Test
+    fun matchAndConvert_sameSlotSameRoomStillMergesWeeks() {
+        val result = matcher.matchAndConvert(
+            remoteCourses = listOf(
+                remote(name = "高等数学", weeks = listOf(1, 3, 5)),
+                remote(name = "高等数学", weeks = listOf(2, 4))
+            ),
+            existingCourses = emptyList(),
+            existingSessions = emptyList()
+        )
+
+        assertEquals(1, result.newSessions.size)
+        assertEquals(listOf(1, 2, 3, 4, 5), result.newSessions.single().weeks)
+        assertEquals("教3－300", result.newSessions.single().classroom)
+    }
+
+    @Test
+    fun matchAndConvert_repeatedImportDedupesWeeksPerClassroom() {
+        // 已有一条"单周@教1-101"时再导单双周两段：只有"双周@教2-202"是缺失的；
+        // 旧键不含教室会把两条已有 session 的周次 union，导致双周段被误判已存在
+        val existingCourse = CourseInfo(id = "c1", name = "大学英语", teacher = "孙老师")
+        val existingOdd = CourseSession(
+            courseId = "c1",
+            day = 1,
+            startSection = 1,
+            endSection = 2,
+            weeks = (1..17).filter { it % 2 == 1 },
+            classroom = "教1-101"
+        )
+
+        val result = matcher.matchAndConvert(
+            remoteCourses = listOf(
+                remote(name = "大学英语", weeks = (1..17).filter { it % 2 == 1 }, classroom = "教1-101"),
+                remote(name = "大学英语", weeks = (2..18).filter { it % 2 == 0 }, classroom = "教2-202")
+            ),
+            existingCourses = listOf(existingCourse),
+            existingSessions = listOf(existingOdd)
+        )
+
+        assertTrue(result.newCourses.isEmpty())
+        assertEquals(1, result.newSessions.size)
+        assertEquals("教2-202", result.newSessions.single().classroom)
+        assertEquals((2..18).filter { it % 2 == 0 }, result.newSessions.single().weeks)
+    }
+
+    @Test
+    fun matchAndConvert_blankClassroomsStillMerge() {
+        val result = matcher.matchAndConvert(
+            remoteCourses = listOf(
+                remote(name = "体育", weeks = listOf(1, 2), classroom = ""),
+                remote(name = "体育", weeks = listOf(3, 4), classroom = "")
+            ),
+            existingCourses = emptyList(),
+            existingSessions = emptyList()
+        )
+
+        assertEquals(1, result.newSessions.size)
+        assertEquals(listOf(1, 2, 3, 4), result.newSessions.single().weeks)
+        assertEquals("", result.newSessions.single().classroom)
     }
 
     private fun remote(

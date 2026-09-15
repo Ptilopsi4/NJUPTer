@@ -35,7 +35,15 @@ class TimetableImportMatcher {
         }
 
         val existingWeeksBySession = existingSessions
-            .groupBy { SessionKey(it.courseId, it.day, it.startSection, it.endSection) }
+            .groupBy {
+                SessionKey(
+                    courseId = it.courseId,
+                    day = it.day,
+                    startSection = it.startSection,
+                    endSection = it.endSection,
+                    classroom = canonicalize(it.classroom.orEmpty())
+                )
+            }
             .mapValues { (_, sessions) -> sessions.flatMap { it.weeks }.toSet() }
 
         remoteCourses.forEach { remote ->
@@ -56,11 +64,14 @@ class TimetableImportMatcher {
                 newCourse
             }
 
+            // 教室必须进 session 键：同名同节次的单双周课可能换教室，
+            // 按周次并段时教室要跟着各自的周次走，不能被后到者覆盖
             val sessionKey = SessionKey(
                 courseId = courseInfo.id,
                 day = remote.dayOfWeek,
                 startSection = remote.startSection,
-                endSection = remote.endSection
+                endSection = remote.endSection,
+                classroom = canonicalize(remote.classroom)
             )
             val missingWeeks = remote.weeks
                 .asSequence()
@@ -110,6 +121,7 @@ class TimetableImportMatcher {
         val courseId: String,
         val day: Int,
         val startSection: Int,
-        val endSection: Int
+        val endSection: Int,
+        val classroom: String
     )
 }

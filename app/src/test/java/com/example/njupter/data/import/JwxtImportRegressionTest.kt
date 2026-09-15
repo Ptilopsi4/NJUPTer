@@ -35,13 +35,15 @@ class JwxtImportRegressionTest {
         val remote = parser.parseHtml(html)
         val matcher = TimetableImportMatcher()
         val result = matcher.matchAndConvert(remote, emptyList(), emptyList())
-        // 本地模型教室挂在 CourseSession 上，同名课程不按教室拆成多个 CourseInfo；
-        // 同名同节次的单双周两段会并入同一条 session（沿用先到教室），这是本地既有语义
+        // 教室在 session 上，同名课程仍只生成一个 CourseInfo；
+        // 同名同节次但教室不同的单双周两段各留各的周次与教室
         assertEquals(2, result.newCourses.size)
-        assertEquals(3, result.newSessions.size)
+        assertEquals(4, result.newSessions.size)
         for (week in 1..18) {
             val sessions = result.newSessions.filter { week in it.weeks }
             assertEquals(2, sessions.size)
+            val english = sessions.single { it.startSection == 3 }
+            assertEquals(if (week % 2 == 1) "教3－105" else "语音8室(教3-603)", english.classroom)
             assertEquals(if (week == 2) 7 else 8, sessions.single { it.startSection == 6 }.endSection)
         }
         val repeated = matcher.matchAndConvert(remote, result.newCourses, result.newSessions)
