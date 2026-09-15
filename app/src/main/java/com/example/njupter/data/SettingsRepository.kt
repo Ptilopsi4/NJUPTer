@@ -33,8 +33,8 @@ interface SettingsRepository {
     suspend fun setPredictiveBackAnimation(animation: PredictiveBackAnimation)
     fun getPredictiveBackExitDirection(): Flow<PredictiveBackExitDirection>
     suspend fun setPredictiveBackExitDirection(direction: PredictiveBackExitDirection)
-    fun getReminderLeadMinutes(): Flow<Int>
-    suspend fun setReminderLeadMinutes(minutes: Int)
+    fun getReminderLeadMinutes(): Flow<List<Int>>
+    suspend fun setReminderLeadMinutes(minutes: List<Int>)
     fun getHideFromRecents(): Flow<Boolean>
     suspend fun setHideFromRecents(enabled: Boolean)
 
@@ -68,8 +68,9 @@ interface SettingsRepository {
             ?: PredictiveBackExitDirection.FOLLOW_GESTURE
     }
 
-    fun peekReminderLeadMinutes(): Int {
-        return (getReminderLeadMinutes() as? StateFlow)?.value ?: DEFAULT_REMINDER_LEAD_MINUTES
+    fun peekReminderLeadMinutes(): List<Int> {
+        return (getReminderLeadMinutes() as? StateFlow)?.value
+            ?: listOf(DEFAULT_REMINDER_LEAD_MINUTES)
     }
 
     fun peekHideFromRecents(): Boolean {
@@ -80,6 +81,12 @@ interface SettingsRepository {
         const val DEFAULT_REMINDER_LEAD_MINUTES = 10
         const val MIN_REMINDER_LEAD_MINUTES = 0
         const val MAX_REMINDER_LEAD_MINUTES = 120
+
+        /** 过滤越界值、去重并升序；空列表表示不排任何提醒。 */
+        fun normalizeLeadMinutes(raw: Iterable<Int>): List<Int> =
+            raw.filter { it in MIN_REMINDER_LEAD_MINUTES..MAX_REMINDER_LEAD_MINUTES }
+                .distinct()
+                .sorted()
     }
 }
 
@@ -97,6 +104,7 @@ class SharedPreferencesSettingsRepository(context: Context) : SettingsRepository
         private const val KEY_PREDICTIVE_BACK_ANIMATION = "predictive_back_animation"
         private const val KEY_PREDICTIVE_BACK_EXIT_DIRECTION = "predictive_back_exit_direction"
         private const val KEY_REMINDER_LEAD_MINUTES = "reminder_lead_minutes"
+        private const val KEY_REMINDER_LEAD_MINUTES_SET = "reminder_lead_minutes_set"
         private const val KEY_HIDE_FROM_RECENTS = "hide_from_recents"
     }
 
@@ -136,9 +144,16 @@ class SharedPreferencesSettingsRepository(context: Context) : SettingsRepository
             PredictiveBackExitDirection.FOLLOW_GESTURE
         )
     )
-    private val _reminderLeadMinutes = MutableStateFlow(
-        prefs.getInt(KEY_REMINDER_LEAD_MINUTES, SettingsRepository.DEFAULT_REMINDER_LEAD_MINUTES)
-    )
+    private val _reminderLeadMinutes = MutableStateFlow(loadReminderLeadMinutes())
+
+    // 旧版只存单个提前量：新键缺失时把旧值迁成唯一一段，老用户升级无感
+    private fun loadReminderLeadMinutes(): List<Int> {
+        val stored = prefs.getStringSet(KEY_REMINDER_LEAD_MINUTES_SET, null)
+            ?: return listOf(
+                prefs.getInt(KEY_REMINDER_LEAD_MINUTES, SettingsRepository.DEFAULT_REMINDER_LEAD_MINUTES)
+            )
+        return SettingsRepository.normalizeLeadMinutes(stored.mapNotNull { it.toIntOrNull() })
+    }
     private val _hideFromRecents = MutableStateFlow(prefs.getBoolean(KEY_HIDE_FROM_RECENTS, false))
 
     override fun getShowWeekends(): Flow<Boolean> = _showWeekends.asStateFlow()
@@ -218,15 +233,14 @@ class SharedPreferencesSettingsRepository(context: Context) : SettingsRepository
         _predictiveBackExitDirection.value = direction
     }
 
-    override fun getReminderLeadMinutes(): Flow<Int> = _reminderLeadMinutes.asStateFlow()
+    override fun getReminderLeadMinutes(): Flow<List<Int>> = _reminderLeadMinutes.asStateFlow()
 
-    override suspend fun setReminderLeadMinutes(minutes: Int) {
-        val clamped = minutes.coerceIn(
-            SettingsRepository.MIN_REMINDER_LEAD_MINUTES,
-            SettingsRepository.MAX_REMINDER_LEAD_MINUTES
-        )
-        prefs.edit { putInt(KEY_REMINDER_LEAD_MINUTES, clamped) }
-        _reminderLeadMinutes.value = clamped
+    override suspend fun setReminderLeadMinutes(minutes: List<Int>) {
+        val normalized = SettingsRepository.normalizeLeadMinutes(minutes)
+        prefs.edit {
+            putStringSet(KEY_REMINDER_LEAD_MINUTES_SET, normalized.map { it.toString() }.toSet())
+        }
+        _reminderLeadMinutes.value = normalized
     }
 
     override fun getHideFromRecents(): Flow<Boolean> = _hideFromRecents.asStateFlow()

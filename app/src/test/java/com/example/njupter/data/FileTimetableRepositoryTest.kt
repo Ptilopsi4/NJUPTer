@@ -158,7 +158,7 @@ private class FakeSettingsRepository(lastSelectedId: String?) : SettingsReposito
     private val predictiveBackAnimation = MutableStateFlow(PredictiveBackAnimation.SCALE)
     private val predictiveBackExitDirection =
         MutableStateFlow(PredictiveBackExitDirection.FOLLOW_GESTURE)
-    private val reminderLeadMinutes = MutableStateFlow(SettingsRepository.DEFAULT_REMINDER_LEAD_MINUTES)
+    private val reminderLeadMinutes = MutableStateFlow(listOf(SettingsRepository.DEFAULT_REMINDER_LEAD_MINUTES))
     private val hideFromRecents = MutableStateFlow(false)
 
     override fun getShowWeekends() = showWeekends
@@ -192,7 +192,7 @@ private class FakeSettingsRepository(lastSelectedId: String?) : SettingsReposito
         predictiveBackExitDirection.value = direction
     }
     override fun getReminderLeadMinutes() = reminderLeadMinutes
-    override suspend fun setReminderLeadMinutes(minutes: Int) {
+    override suspend fun setReminderLeadMinutes(minutes: List<Int>) {
         reminderLeadMinutes.value = minutes
     }
     override fun getHideFromRecents() = hideFromRecents

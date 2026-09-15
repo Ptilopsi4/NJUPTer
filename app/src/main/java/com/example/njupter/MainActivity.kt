@@ -167,7 +167,7 @@ class MainActivity : ComponentActivity() {
             val courseColorTone by settingsRepository.getCourseColorTone().collectAsState(
                 initial = settingsRepository.peekCourseColorTone()
             )
-            val reminderLeadMinutes by settingsRepository.getReminderLeadMinutes().collectAsState(
+            val reminderLeadMinutesList by settingsRepository.getReminderLeadMinutes().collectAsState(
                 initial = settingsRepository.peekReminderLeadMinutes()
             )
             val hideFromRecents by settingsRepository.getHideFromRecents().collectAsState(
@@ -491,7 +491,7 @@ class MainActivity : ComponentActivity() {
                                                             )
                                                         }
                                                     },
-                                                    reminderLeadMinutes = reminderLeadMinutes,
+                                                    reminderLeadMinutesList = reminderLeadMinutesList,
                                                     onReminderLeadMinutesChange = { minutes ->
                                                         // 提前时间已变：保存后重排已排闹钟
                                                         scope.launch {

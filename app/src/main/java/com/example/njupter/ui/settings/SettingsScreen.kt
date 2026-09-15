@@ -36,6 +36,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.njupter.R
+import com.example.njupter.data.SettingsRepository
 import com.example.njupter.ui.LocalActivityContext
 import com.example.njupter.ui.settings.component.SettingsSectionCard
 import com.example.njupter.ui.settings.dialog.ReminderLeadDialog
@@ -63,8 +64,8 @@ fun SettingsScreen(
     onToggleHideFromRecents: (Boolean) -> Unit = {},
     onBack: () -> Unit,
     onExactAlarmsEnabled: () -> Unit = {},
-    reminderLeadMinutes: Int = 10,
-    onReminderLeadMinutesChange: (Int) -> Unit = {}
+    reminderLeadMinutesList: List<Int> = listOf(SettingsRepository.DEFAULT_REMINDER_LEAD_MINUTES),
+    onReminderLeadMinutesChange: (List<Int>) -> Unit = {}
 ) {
     val context = LocalContext.current
     // 语言覆写后 LocalContext 可能不是 Activity，跳系统设置必须用真 Activity
@@ -185,7 +186,11 @@ fun SettingsScreen(
             icon = SettingsIcon.Vector(Icons.Default.Timer),
             title = stringResource(R.string.reminder_lead_time),
             description = stringResource(R.string.reminder_lead_time_summary),
-            value = stringResource(R.string.reminder_lead_min_value, reminderLeadMinutes),
+            value = if (reminderLeadMinutesList.isEmpty()) {
+                stringResource(R.string.reminder_lead_disabled)
+            } else {
+                reminderLeadMinutesList.joinToString { context.getString(R.string.reminder_lead_min_value, it) }
+            },
             onClick = { showReminderLeadDialog = true }
         ),
     )
@@ -294,7 +299,7 @@ fun SettingsScreen(
 
     if (showReminderLeadDialog) {
         ReminderLeadDialog(
-            initialMinutes = reminderLeadMinutes,
+            initialMinutes = reminderLeadMinutesList,
             onDismiss = { showReminderLeadDialog = false },
             onConfirm = { minutes ->
                 showReminderLeadDialog = false

@@ -153,6 +153,9 @@
     <string name="reminder_lead_min_value">%1$d 分钟</string>
     <string name="reminder_lead_minutes_label">分钟</string>
     <string name="reminder_lead_range_hint">范围 0–120；0 = 上课时提醒</string>
+    <string name="reminder_lead_empty_hint">未选择任何提前量，将不提醒</string>
+    <string name="reminder_lead_add">添加该提前量</string>
+    <string name="reminder_lead_disabled">已关闭</string>
     <string name="minutes_unit">分钟</string>
     <string name="course_reminder_toggle">上课提醒</string>
     <string name="course_reminder_toggle_summary">上课前通知该课程</string>

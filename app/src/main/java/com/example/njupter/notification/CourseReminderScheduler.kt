@@ -48,7 +48,8 @@ class CourseReminderScheduler(
         val horizon = now + SCHEDULE_WINDOW_MILLIS
         val requestCodes = mutableSetOf<Int>()
         val assignedCodes = mutableMapOf<Int, String>()    // requestCode -> 唯一键，用于碰撞检测
-        val leadMillis = settingsRepository.peekReminderLeadMinutes() * 60_000L
+        val leadMinutesList = settingsRepository.peekReminderLeadMinutes()
+        if (leadMinutesList.isEmpty()) return    // 未选任何提前量 = 全局不提醒
 
         for (week in 1..totalWeeks) {
             sessions.forEach { session ->
@@ -61,37 +62,46 @@ class CourseReminderScheduler(
                     day = session.day,
                     minuteOfDay = startMinute
                 )
-                val reminderMillis = classStartMillis - leadMillis
-
-                if (reminderMillis <= now || reminderMillis > horizon) return@forEach
 
                 val course = courseMap[session.courseId] ?: return@forEach
                 if (!course.reminderEnabled) return@forEach    // 单课提醒开关
 
                 val timeText = buildSessionTimeText(sessionTimes, session.startSection, session.endSection)
-                val reminderKey = "$currentTimetableId|$session.courseId|$week|$classStartMillis"
-                val requestCode = resolveCollisionFreeRequestCode(assignedCodes, reminderKey)
-                assignedCodes[requestCode] = reminderKey
 
-                val reminderIntent = Intent(context, CourseReminderReceiver::class.java).apply {
-                    putExtra(CourseReminderContract.EXTRA_NOTIFICATION_ID, requestCode)
-                    putExtra(CourseReminderContract.EXTRA_COURSE_NAME, course.name)
-                    putExtra(CourseReminderContract.EXTRA_TIME_TEXT, timeText)
-                    putExtra(CourseReminderContract.EXTRA_CLASSROOM, session.classroom)
-                    putExtra(CourseReminderContract.EXTRA_ATTENDANCE_TYPE, course.attendanceType)
-                    putExtra(CourseReminderContract.EXTRA_LEAD_MINUTES, (leadMillis / 60_000L).toInt())
+                leadMinutesList.forEach { lead ->
+                    val reminderMillis = classStartMillis - lead * 60_000L
+                    if (reminderMillis <= now || reminderMillis > horizon) return@forEach
+
+                    val reminderKey = buildReminderKey(
+                        timetableId = currentTimetableId,
+                        courseId = session.courseId,
+                        week = week,
+                        classStartMillis = classStartMillis,
+                        leadMinutes = lead
+                    )
+                    val requestCode = resolveCollisionFreeRequestCode(assignedCodes, reminderKey)
+                    assignedCodes[requestCode] = reminderKey
+
+                    val reminderIntent = Intent(context, CourseReminderReceiver::class.java).apply {
+                        putExtra(CourseReminderContract.EXTRA_NOTIFICATION_ID, requestCode)
+                        putExtra(CourseReminderContract.EXTRA_COURSE_NAME, course.name)
+                        putExtra(CourseReminderContract.EXTRA_TIME_TEXT, timeText)
+                        putExtra(CourseReminderContract.EXTRA_CLASSROOM, session.classroom)
+                        putExtra(CourseReminderContract.EXTRA_ATTENDANCE_TYPE, course.attendanceType)
+                        putExtra(CourseReminderContract.EXTRA_LEAD_MINUTES, lead)
+                    }
+
+                    val pendingIntent = PendingIntent.getBroadcast(
+                        context,
+                        requestCode,
+                        reminderIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
+
+                    scheduleExactSafely(reminderMillis, pendingIntent)
+
+                    requestCodes.add(requestCode)
                 }
-
-                val pendingIntent = PendingIntent.getBroadcast(
-                    context,
-                    requestCode,
-                    reminderIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                )
-
-                scheduleExactSafely(reminderMillis, pendingIntent)
-
-                requestCodes.add(requestCode)
             }
         }
 
@@ -208,3 +218,12 @@ internal fun resolveCollisionFreeRequestCode(
     }
     return code
 }
+
+/** 同一节课的每段提前量一个独立键，多段提醒互不覆盖。 */
+internal fun buildReminderKey(
+    timetableId: String,
+    courseId: String,
+    week: Int,
+    classStartMillis: Long,
+    leadMinutes: Int
+): String = "$timetableId|$courseId|$week|$classStartMillis|$leadMinutes"

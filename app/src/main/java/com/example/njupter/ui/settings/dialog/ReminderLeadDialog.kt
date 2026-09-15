@@ -25,17 +25,24 @@ import com.example.njupter.R
 import com.example.njupter.data.SettingsRepository
 import com.example.njupter.ui.theme.NJUPTerTheme
 
+/**
+ * 多段提前量：预设 chip 多选（可同时选"60 分钟"+"10 分钟"两类提醒），
+ * 输入框补充 0–120 内的任意自定义值；全部取消选择即关闭提醒。
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ReminderLeadDialog(
-    initialMinutes: Int,
+    initialMinutes: List<Int>,
     onDismiss: () -> Unit,
-    onConfirm: (Int) -> Unit
+    onConfirm: (List<Int>) -> Unit
 ) {
-    var input by remember { mutableStateOf(initialMinutes.toString()) }
+    var selected by remember { mutableStateOf(initialMinutes.toSet()) }
+    var input by remember { mutableStateOf("") }
     val parsed = input.toIntOrNull()
-    val valid = parsed != null &&
-        parsed in SettingsRepository.MIN_REMINDER_LEAD_MINUTES..SettingsRepository.MAX_REMINDER_LEAD_MINUTES
+    val outOfRange = parsed != null &&
+        (parsed < SettingsRepository.MIN_REMINDER_LEAD_MINUTES ||
+            parsed > SettingsRepository.MAX_REMINDER_LEAD_MINUTES)
+    val addable = parsed != null && !outOfRange && parsed !in selected
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -54,8 +61,18 @@ fun ReminderLeadDialog(
                 ) {
                     presetMinutes.forEach { minutes ->
                         FilterChip(
-                            selected = parsed == minutes,
-                            onClick = { input = minutes.toString() },
+                            selected = minutes in selected,
+                            onClick = {
+                                selected = if (minutes in selected) selected - minutes else selected + minutes
+                            },
+                            label = { Text(stringResource(R.string.reminder_lead_min_value, minutes)) }
+                        )
+                    }
+                    // 自定义值不在预设内：以选中态列出，点击移除
+                    selected.filterNot { it in presetMinutes }.sorted().forEach { minutes ->
+                        FilterChip(
+                            selected = true,
+                            onClick = { selected = selected - minutes },
                             label = { Text(stringResource(R.string.reminder_lead_min_value, minutes)) }
                         )
                     }
@@ -69,19 +86,27 @@ fun ReminderLeadDialog(
                     label = { Text(stringResource(R.string.reminder_lead_minutes_label)) },
                     suffix = { Text(stringResource(R.string.minutes_unit)) },
                     singleLine = true,
-                    isError = !valid,
+                    isError = outOfRange,
                     supportingText = {
-                        Text(stringResource(R.string.reminder_lead_range_hint))
+                        Text(
+                            if (selected.isEmpty()) stringResource(R.string.reminder_lead_empty_hint)
+                            else stringResource(R.string.reminder_lead_range_hint)
+                        )
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
+                if (addable) {
+                    TextButton(onClick = {
+                        selected = selected + (parsed ?: 0)
+                        input = ""
+                    }) { Text(stringResource(R.string.reminder_lead_add)) }
+                }
             }
         },
         confirmButton = {
-            Button(
-                onClick = { onConfirm(parsed!!) },
-                enabled = valid
-            ) { Text(stringResource(R.string.confirm)) }
+            Button(onClick = { onConfirm(selected.toList()) }) {
+                Text(stringResource(R.string.confirm))
+            }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
@@ -91,14 +116,14 @@ fun ReminderLeadDialog(
     )
 }
 
-private val presetMinutes = listOf(5, 10, 15, 20, 30)
+private val presetMinutes = listOf(0, 5, 10, 15, 30, 60)
 
 @Preview(showBackground = true)
 @Composable
 private fun ReminderLeadDialogPreview() {
     NJUPTerTheme {
         ReminderLeadDialog(
-            initialMinutes = 10,
+            initialMinutes = listOf(10, 60),
             onDismiss = {},
             onConfirm = {}
         )
