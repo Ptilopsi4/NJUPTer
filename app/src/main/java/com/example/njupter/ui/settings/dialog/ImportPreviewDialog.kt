@@ -38,6 +38,7 @@ import java.util.Locale
 fun ImportPreviewDialog(
     importResult: TimetableImportMatcher.ImportResult,
     semesterRange: SemesterRange? = null,
+    skippedRecords: Int = 0,
     onConfirm: (String, Long, Int) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -75,7 +76,29 @@ fun ImportPreviewDialog(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(text = importResult.summary)
+                // 有记录被跳过时用警示色，避免用户拿总数和教务系统对不上时无从排查
+                val summaryText = if (skippedRecords > 0) {
+                    stringResource(
+                        R.string.import_summary_with_skipped,
+                        importResult.newCourses.size,
+                        importResult.newSessions.size,
+                        skippedRecords
+                    )
+                } else {
+                    stringResource(
+                        R.string.import_summary,
+                        importResult.newCourses.size,
+                        importResult.newSessions.size
+                    )
+                }
+                Text(
+                    text = summaryText,
+                    color = if (skippedRecords > 0) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        Color.Unspecified
+                    }
+                )
                 if (semesterRange != null) {
                     Text(
                         text = stringResource(R.string.import_semester_autofilled),
@@ -164,8 +187,7 @@ private fun ImportPreviewDialogPreview() {
                         weeks = listOf(1, 2, 3),
                         classroom = "A101"
                     )
-                ),
-                summary = "Found 1 new course and 1 new session."
+                )
             ),
             onConfirm = { _, _, _ -> },
             onDismiss = {}

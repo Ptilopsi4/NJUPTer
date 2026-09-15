@@ -13,16 +13,14 @@ class TimetableImportMatcher {
     data class ImportResult(
         val newCourses: List<CourseInfo>,
         val newSessions: List<CourseSession>,
-        val summary: String
+        // 周次解析为空的远程记录数：无法安排到任何周，只能计数暴露给预览
+        val skippedRecords: Int = 0
     )
 
     fun matchAndConvert(
         remoteCourses: List<RemoteCourse>,
         existingCourses: List<CourseInfo>,
-        existingSessions: List<CourseSession>,
-        summaryTemplate: (Int, Int) -> String = { courses, sessions ->
-            "Found $courses new courses, $sessions new sessions."
-        }
+        existingSessions: List<CourseSession>
     ): ImportResult {
         val newInfos = mutableListOf<CourseInfo>()
         val pendingSessions = linkedMapOf<SessionKey, CourseSession>()
@@ -46,8 +44,12 @@ class TimetableImportMatcher {
             }
             .mapValues { (_, sessions) -> sessions.flatMap { it.weeks }.toSet() }
 
+        var skippedRecords = 0
         remoteCourses.forEach { remote ->
-            if (remote.weeks.isEmpty()) return@forEach
+            if (remote.weeks.isEmpty()) {
+                skippedRecords++
+                return@forEach
+            }
 
             val courseInfo = courseMap.getOrPut(
                 courseKey(remote.name, remote.teacher)
@@ -95,7 +97,7 @@ class TimetableImportMatcher {
         return ImportResult(
             newCourses = newInfos,
             newSessions = newSessions,
-            summary = summaryTemplate(newInfos.size, newSessions.size)
+            skippedRecords = skippedRecords
         )
     }
 

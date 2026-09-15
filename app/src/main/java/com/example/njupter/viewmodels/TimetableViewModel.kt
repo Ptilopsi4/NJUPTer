@@ -147,7 +147,8 @@ class TimetableViewModel(
         val isImporting: Boolean = false,
         val result: TimetableImportMatcher.ImportResult? = null,
         val error: String? = null,
-        val semesterRange: SemesterRange? = null
+        val semesterRange: SemesterRange? = null,
+        val skippedRecords: Int = 0
     )
 
     private data class TimetableBundle(
@@ -168,14 +169,18 @@ class TimetableViewModel(
             _importState.value = ImportState(isImporting = true, semesterRange = semesterRange)
             try {
                 val parser = JwxtParser()
-                val remoteCourses = parser.parseHtml(html)
+                val parseResult = parser.parseHtmlDetailed(html)
 
                 val matcher = TimetableImportMatcher()
-                
+
                 // For a new timetable, we match against empty lists to treat all courses as new
-                val result = matcher.matchAndConvert(remoteCourses, emptyList(), emptyList())
-                
-                _importState.value = ImportState(result = result, semesterRange = semesterRange)
+                val result = matcher.matchAndConvert(parseResult.courses, emptyList(), emptyList())
+
+                _importState.value = ImportState(
+                    result = result,
+                    semesterRange = semesterRange,
+                    skippedRecords = parseResult.skippedRecords + result.skippedRecords
+                )
             } catch (e: Exception) {
                 _importState.value = ImportState(error = e.message ?: "Unknown error", semesterRange = semesterRange)
             }

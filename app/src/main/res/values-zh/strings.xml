@@ -122,6 +122,8 @@
     <string name="new_timetable_name">新课表名称</string>
     <string name="import_desc">将为你自动创建一个全新的课表。</string>
     <string name="create_and_import">创建并导入</string>
+    <string name="import_summary">共 %1$d 门课程，%2$d 条上课安排</string>
+    <string name="import_summary_with_skipped">共 %1$d 门课程，%2$d 条上课安排，另有 %3$d 条记录无法解析已跳过</string>
 
     <!-- Jwxt Import -->
     <string name="jwxt_login_title">智慧校园统一认证</string>

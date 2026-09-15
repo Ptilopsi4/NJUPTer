@@ -18,14 +18,26 @@ data class RemoteCourse(
     val weeks: List<Int>
 )
 
+data class JwxtParseResult(
+    val courses: List<RemoteCourse>,
+    val skippedRecords: Int
+)
+
 /**
  * 新版正方教务课表 HTML 解析层。
  */
 class JwxtParser {
 
-    fun parseHtml(html: String): List<RemoteCourse> {
+    fun parseHtml(html: String): List<RemoteCourse> = parseHtmlDetailed(html).courses
+
+    /**
+     * [skippedRecords] 统计页面里存在课程块、但时间位置解析不出来而被丢弃的记录，
+     * 供预览层把静默丢课变成显式提示。
+     */
+    fun parseHtmlDetailed(html: String): JwxtParseResult {
         val document = Jsoup.parse(html)
         val courses = mutableListOf<RemoteCourse>()
+        var skippedRecords = 0
 
         // 列表字段带有稳定标签，但节次单元格也可能通过 rowspan 覆盖多条课程行。
         val table = document.getElementById("kblist_table")
@@ -58,25 +70,25 @@ class JwxtParser {
                     span.coerceAtLeast(1)
                 }
             }
-            if (remainingSectionRows <= 0) continue
-            remainingSectionRows--
+            val hasSlot = remainingSectionRows > 0
+            if (hasSlot) remainingSectionRows--
             val (startSection, endSection) = currentSections
-            if (currentDay == -1 || startSection == -1) continue
 
-            for (block in row.select("div.timetable_con")) {
-                // 红色斜体是“待筛选”课程，不属于已经选上的课表。
-                val titleColor = block.selectFirst(".title font")
-                    ?.attr("color")
-                    ?.trim()
-                    ?.lowercase()
-                if (titleColor == "red") continue
+            val blocks = row.select("div.timetable_con")
+            if (!hasSlot || currentDay == -1 || startSection == -1) {
+                skippedRecords += blocks.count { !isPendingCourseBlock(it) }
+                continue
+            }
+
+            for (block in blocks) {
+                if (isPendingCourseBlock(block)) continue
 
                 parseCourseBlock(block, currentDay, startSection, endSection)
                     ?.let(courses::add)
             }
         }
 
-        return courses
+        return JwxtParseResult(courses, skippedRecords)
     }
 
     private fun parseCourseBlock(
@@ -106,6 +118,14 @@ class JwxtParser {
             endSection = endSection,
             weeks = weeks
         )
+    }
+
+    // 红色斜体是“待筛选”课程，不属于已经选上的课表。
+    private fun isPendingCourseBlock(block: Element): Boolean {
+        return block.selectFirst(".title font")
+            ?.attr("color")
+            ?.trim()
+            ?.lowercase() == "red"
     }
 
     private fun extractLabeledValue(text: String, label: String): String {

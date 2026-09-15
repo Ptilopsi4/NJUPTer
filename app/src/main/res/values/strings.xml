@@ -123,6 +123,8 @@
     <string name="new_timetable_name">New Timetable Name</string>
     <string name="import_desc">A new timetable will be created automatically.</string>
     <string name="create_and_import">Create and Import</string>
+    <string name="import_summary">%1$d courses, %2$d sessions</string>
+    <string name="import_summary_with_skipped">%1$d courses, %2$d sessions; %3$d records skipped (could not be parsed)</string>
 
     <!-- Jwxt Import -->
     <string name="jwxt_login_title">Campus Authentication</string>

@@ -181,6 +181,21 @@ class TimetableImportMatcherTest {
         assertEquals("", result.newSessions.single().classroom)
     }
 
+    @Test
+    fun matchAndConvert_countsRemotesWithoutParseableWeeks() {
+        val result = matcher.matchAndConvert(
+            remoteCourses = listOf(
+                remote(name = "大学英语", weeks = listOf(1, 2)),
+                remote(name = "体育", weeks = emptyList())
+            ),
+            existingCourses = emptyList(),
+            existingSessions = emptyList()
+        )
+
+        assertEquals(1, result.newCourses.size)
+        assertEquals(1, result.skippedRecords)
+    }
+
     private fun remote(
         name: String,
         weeks: List<Int>,

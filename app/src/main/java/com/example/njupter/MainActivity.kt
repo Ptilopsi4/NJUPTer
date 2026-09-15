@@ -230,6 +230,7 @@ class MainActivity : ComponentActivity() {
                         ImportPreviewDialog(
                             importResult = result,
                             semesterRange = importState.semesterRange,
+                            skippedRecords = importState.skippedRecords,
                             onConfirm = { name, startDate, totalWeeks ->
                                 viewModel.createAndImportTimetable(
                                     name = name,

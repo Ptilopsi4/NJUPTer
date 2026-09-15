@@ -82,6 +82,26 @@ class JwxtParserTest {
         }
     }
 
+    @Test
+    fun parseHtmlDetailed_countsBlocksInRowsWithoutResolvableSlot() {
+        // 节次 rowspan 只覆盖第一行，第二行的课程块无处安放：
+        // 必须计数暴露，而不是静默丢弃
+        fun block(name: String) =
+            """<td><div class="timetable_con"><span class="title"><font color="blue">$name</font></span><p><font color="blue">周数：1-2周</font></p></div></td>"""
+        val html = """
+            <table id="kblist_table"><tbody>
+            <tr><td><span class="week">星期四</span></td><td><span class="festival">3-4</span></td>${block("first")}</tr>
+            <tr>${block("orphan")}</tr>
+            </tbody></table>
+        """.trimIndent()
+
+        val result = parser.parseHtmlDetailed(html)
+
+        assertEquals(1, result.courses.size)
+        assertEquals("first", result.courses.single().name)
+        assertEquals(1, result.skippedRecords)
+    }
+
     private companion object {
         val NEW_JWGLXT_HTML = """
             <table id="kblist_table">
