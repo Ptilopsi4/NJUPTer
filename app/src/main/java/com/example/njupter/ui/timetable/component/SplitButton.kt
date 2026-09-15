@@ -1,7 +1,7 @@
 package com.example.njupter.ui.timetable.component
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -31,7 +31,7 @@ fun SplitButton(
     SplitButtonLayout(
         modifier = modifier
             .scale(0.85f)
-            .animateContentSize(animationSpec = spring()),
+            .animateContentSize(animationSpec = tween(200)),
         leadingButton = {
             SplitButtonDefaults.OutlinedLeadingButton(
                 onClick = { },

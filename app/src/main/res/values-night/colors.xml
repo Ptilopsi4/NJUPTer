@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 深色模式仅覆盖开屏背景，其余沿用默认值 -->
+<resources>
+    <!-- 与 M3 默认 darkColorScheme 背景一致，开屏→主页过渡无色差 -->
+    <color name="splash_background">#FF1C1B1F</color>
+</resources>

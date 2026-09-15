@@ -1,3 +1,11 @@
+import java.util.Properties
+
+// release 签名凭据：根目录 keystore.properties（不入库）。缺失时退回 debug 签名，保证可构建。
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) load(keystorePropertiesFile.inputStream())
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -11,8 +19,8 @@ android {
         applicationId = "com.example.njupter"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 3
+        versionName = "1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -27,6 +35,17 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            if (keystorePropertiesFile.exists()) {
+                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -34,6 +53,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = if (keystorePropertiesFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")    // 无 keystore 时退回 debug，保证 CI/克隆仓库可构建
+            }
         }
     }
     compileOptions {
@@ -60,6 +84,11 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.7.5")
     implementation("com.google.code.gson:gson:2.10.1")
     implementation(libs.androidx.compose.foundation)
+
+    // Glance 小组件
+    implementation(libs.glance.appwidget)
+    implementation(libs.glance.material3)
+    implementation(libs.work.runtime.ktx)
 
     // 网络与爬虫解析
     implementation(libs.okhttp)

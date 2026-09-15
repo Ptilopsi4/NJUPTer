@@ -5,5 +5,6 @@ data class CourseSession(
     val day: Int,           // 1=Mon, 2=Tue, ...
     val startSection: Int,
     val endSection: Int,
-    val weeks: List<Int> = (1..30).toList()
+    val weeks: List<Int> = (1..30).toList(),
+    val classroom: String = ""
 )

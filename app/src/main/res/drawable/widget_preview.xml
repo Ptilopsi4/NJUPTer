@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Widget picker 预览图：静态示意（浅色静态主题），与 CoursesWidgetContent 的真实布局手工对齐：
+    头部（图标+标题+右侧周数），行内从左到右为 时间列 → 5dp 课程色条 → 课程名+元信息。
+    课程色取 WidgetLightColors 前 3 个，语义色取 WidgetColorProviders.Light。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="250dp"
+    android:height="180dp"
+    android:viewportWidth="250"
+    android:viewportHeight="180">
+
+    <!-- 背景 widgetBackground #F5FBF0，圆角 16 -->
+    <path
+        android:fillColor="#F5FBF0"
+        android:pathData="M8,0 h234 a8,8 0 0 1 8,8 v164 a8,8 0 0 1 -8,8 h-234 a8,8 0 0 1 -8,-8 v-164 a8,8 0 0 1 8,-8 z" />
+
+    <!-- 头部：图标(22dp 圆) + 标题 15sp bold #171D18 + 右侧周数 #424940 -->
+    <path
+        android:fillColor="#1A6D37"
+        android:pathData="M23,12 a11,11 0 1 0 0.001,0 z" />
+    <path
+        android:fillColor="#171D18"
+        android:pathData="M46,19 h80 a4,4 0 0 1 4,4 v0 a4,4 0 0 1 -4,4 h-80 a4,4 0 0 1 -4,-4 v0 a4,4 0 0 1 4,-4 z" />
+    <path
+        android:fillColor="#424940"
+        android:pathData="M206,19 h28 a4,4 0 0 1 4,4 v0 a4,4 0 0 1 -4,4 h-28 a4,4 0 0 1 -4,-4 v0 a4,4 0 0 1 4,-4 z" />
+
+    <!-- 课程行 1：bg surfaceVariant #DDE5D9 圆角 18，y42..94 -->
+    <path
+        android:fillColor="#DDE5D9"
+        android:pathData="M30,42 h190 a18,18 0 0 1 18,18 v16 a18,18 0 0 1 -18,18 h-190 a18,18 0 0 1 -18,-18 v-16 a18,18 0 0 1 18,-18 z" />
+    <!-- 开始时间 #171D18 / 结束时间 #424940 -->
+    <path
+        android:fillColor="#171D18"
+        android:pathData="M24.5,53 h21 a2.5,2.5 0 0 1 2.5,2.5 v0 a2.5,2.5 0 0 1 -2.5,2.5 h-21 a2.5,2.5 0 0 1 -2.5,-2.5 v0 a2.5,2.5 0 0 1 2.5,-2.5 z" />
+    <path
+        android:fillColor="#424940"
+        android:pathData="M24,64 h16 a2,2 0 0 1 2,2 v0 a2,2 0 0 1 -2,2 h-16 a2,2 0 0 1 -2,-2 v0 a2,2 0 0 1 2,-2 z" />
+    <!-- 课程色条 5dp #FFCDD2 -->
+    <path
+        android:fillColor="#FFCDD2"
+        android:pathData="M82.5,49 a2.5,2.5 0 0 0 -2.5,2.5 v33 a2.5,2.5 0 0 0 2.5,2.5 h0 a2.5,2.5 0 0 0 2.5,-2.5 v-33 a2.5,2.5 0 0 0 -2.5,-2.5 z" />
+    <!-- 课程名 + 元信息 -->
+    <path
+        android:fillColor="#171D18"
+        android:pathData="M99,52 h92 a4,4 0 0 1 4,4 v0 a4,4 0 0 1 -4,4 h-92 a4,4 0 0 1 -4,-4 v0 a4,4 0 0 1 4,-4 z" />
+    <path
+        android:fillColor="#424940"
+        android:pathData="M98,66 h124 a3,3 0 0 1 3,3 v0 a3,3 0 0 1 -3,3 h-124 a3,3 0 0 1 -3,-3 v0 a3,3 0 0 1 3,-3 z" />
+
+    <!-- 课程行 2：y100..152 -->
+    <path
+        android:fillColor="#DDE5D9"
+        android:pathData="M30,100 h190 a18,18 0 0 1 18,18 v16 a18,18 0 0 1 -18,18 h-190 a18,18 0 0 1 -18,-18 v-16 a18,18 0 0 1 18,-18 z" />
+    <path
+        android:fillColor="#171D18"
+        android:pathData="M24.5,111 h19 a2.5,2.5 0 0 1 2.5,2.5 v0 a2.5,2.5 0 0 1 -2.5,2.5 h-19 a2.5,2.5 0 0 1 -2.5,-2.5 v0 a2.5,2.5 0 0 1 2.5,-2.5 z" />
+    <path
+        android:fillColor="#424940"
+        android:pathData="M24,122 h14 a2,2 0 0 1 2,2 v0 a2,2 0 0 1 -2,2 h-14 a2,2 0 0 1 -2,-2 v0 a2,2 0 0 1 2,-2 z" />
+    <path
+        android:fillColor="#E1BEE7"
+        android:pathData="M82.5,107 a2.5,2.5 0 0 0 -2.5,2.5 v33 a2.5,2.5 0 0 0 2.5,2.5 h0 a2.5,2.5 0 0 0 2.5,-2.5 v-33 a2.5,2.5 0 0 0 -2.5,-2.5 z" />
+    <path
+        android:fillColor="#171D18"
+        android:pathData="M99,110 h77 a4,4 0 0 1 4,4 v0 a4,4 0 0 1 -4,4 h-77 a4,4 0 0 1 -4,-4 v0 a4,4 0 0 1 4,-4 z" />
+    <path
+        android:fillColor="#424940"
+        android:pathData="M98,124 h114 a3,3 0 0 1 3,3 v0 a3,3 0 0 1 -3,3 h-114 a3,3 0 0 1 -3,-3 v0 a3,3 0 0 1 3,-3 z" />
+
+    <!-- 课程行 3：y158 起被视口裁切，示意可滚动 -->
+    <path
+        android:fillColor="#DDE5D9"
+        android:pathData="M30,158 h190 a18,18 0 0 1 18,18 v16 a18,18 0 0 1 -18,18 h-190 a18,18 0 0 1 -18,-18 v-16 a18,18 0 0 1 18,-18 z" />
+    <path
+        android:fillColor="#171D18"
+        android:pathData="M24.5,169 h21 a2.5,2.5 0 0 1 2.5,2.5 v0 a2.5,2.5 0 0 1 -2.5,2.5 h-21 a2.5,2.5 0 0 1 -2.5,-2.5 v0 a2.5,2.5 0 0 1 2.5,-2.5 z" />
+    <path
+        android:fillColor="#C5CAE9"
+        android:pathData="M82.5,165 a2.5,2.5 0 0 0 -2.5,2.5 v33 a2.5,2.5 0 0 0 2.5,2.5 h0 a2.5,2.5 0 0 0 2.5,-2.5 v-33 a2.5,2.5 0 0 0 -2.5,-2.5 z" />
+    <path
+        android:fillColor="#171D18"
+        android:pathData="M99,168 h72 a4,4 0 0 1 4,4 v0 a4,4 0 0 1 -4,4 h-72 a4,4 0 0 1 -4,-4 v0 a4,4 0 0 1 4,-4 z" />
+</vector>

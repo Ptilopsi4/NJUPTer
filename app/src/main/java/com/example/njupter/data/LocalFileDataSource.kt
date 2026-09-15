@@ -100,7 +100,17 @@ class LocalFileDataSource(private val context: Context) : TimetableDataSource {
                 reader.close()
 
                 val domainCourses = root.courses.map {
-                    CourseInfo(id = it.id, name = it.name, teacher = it.teacher, classroom = it.room, colorIndex = it.colorIndex)
+                    CourseInfo(
+                        id = it.id,
+                        name = it.name,
+                        teacher = it.teacher,
+                        colorIndex = it.colorIndex,
+                        credit = it.credit.orEmpty(),
+                        courseNature = it.courseNature.orEmpty(),
+                        note = it.note.orEmpty(),
+                        attendanceType = it.attendanceType.orEmpty(),
+                        reminderEnabled = it.reminderEnabled ?: false    // 旧数据无该字段时同样默认关闭，与手动新增一致
+                    )
                 }
                 val domainSessions = root.sessions.map {
                     CourseSession(
@@ -108,7 +118,8 @@ class LocalFileDataSource(private val context: Context) : TimetableDataSource {
                         day = it.dayOfWeek,
                         startSection = it.startNode,
                         endSection = it.startNode + it.length - 1,
-                        weeks = it.weeks ?: (1..20).toList()
+                        weeks = it.weeks ?: (1..20).toList(),
+                        classroom = it.classroom.orEmpty()
                     )
                 }
                 return@withContext TimetableData(domainCourses, domainSessions)
@@ -123,7 +134,17 @@ class LocalFileDataSource(private val context: Context) : TimetableDataSource {
         val file = getDataFile(id)
         val root = TimetableJsonRoot(
             courses = data.courses.map {
-                CourseInfoJson(id = it.id, name = it.name, teacher = it.teacher, room = it.classroom, colorIndex = it.colorIndex)
+                CourseInfoJson(
+                    id = it.id,
+                    name = it.name,
+                    teacher = it.teacher,
+                    colorIndex = it.colorIndex,
+                    credit = it.credit,
+                    courseNature = it.courseNature,
+                    note = it.note,
+                    attendanceType = it.attendanceType,
+                    reminderEnabled = it.reminderEnabled
+                )
             },
             sessions = data.sessions.map {
                 CourseSessionJson(
@@ -131,7 +152,8 @@ class LocalFileDataSource(private val context: Context) : TimetableDataSource {
                     dayOfWeek = it.day,
                     startNode = it.startSection,
                     length = it.endSection + 1 - it.startSection,
-                    weeks = it.weeks
+                    weeks = it.weeks,
+                    classroom = it.classroom
                 )
             }
         )

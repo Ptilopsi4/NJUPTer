@@ -1,7 +1,7 @@
 package com.example.njupter.data.import
 
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
 
 /**
  * 远程课程数据模型，临时存放解析来的字段
@@ -10,124 +10,207 @@ data class RemoteCourse(
     val name: String,
     val teacher: String,
     val classroom: String,
+    val credit: String = "",
+    val courseNature: String = "",
     val dayOfWeek: Int, // 1~7
     val startSection: Int,
     val endSection: Int,
     val weeks: List<Int>
 )
 
+data class JwxtParseResult(
+    val courses: List<RemoteCourse>,
+    val skippedRecords: Int
+)
+
 /**
- * HTML 解析层：分离解析逻辑
+ * 新版正方教务课表 HTML 解析层。
  */
 class JwxtParser {
-    
-    fun parseHtml(html: String): List<RemoteCourse> {
-        val document: Document = Jsoup.parse(html)
-        val courses = mutableListOf<RemoteCourse>()
-        
-        // 课表通常是一个 id 为 "Table1" 的表格:
-        // <table id="Table1">
-        val table = document.getElementById("Table1") ?: return emptyList()
-        val tds = table.select("td[align=Center]")
-        
-        for (td in tds) {
-            val htmlContent = td.html()
-            // 过滤空单元格或不含 {} (包含上课周数) 的部分
-            if (htmlContent.isBlank() || htmlContent.contains("&nbsp;")) continue
-            if (!htmlContent.contains("{") && !htmlContent.contains("}")) continue
-            
-            // 有的 td 内包含多门课程(单双周不同)，<br><br> 分隔这些共占用一个单元格的课:
-            // <br>周五第3,4节{第1-17周|单周}<br>王xx<br>教2－101<br><br>大学英语III<br>周五第3,4节{第1-17周|双周}<br>王xx<br>语音5室(教3-538)</td>
-            val courseBlocks = htmlContent.split("<br><br>", "<br><br/>", "<br/><br/>")
-            
-            for (block in courseBlocks) {
-                // 每门课程的各个属性由单个 <br> 分隔
-                val lines = block.split("<br>", "<br/>").map { Jsoup.parse(it).text().trim() }.filter { it.isNotEmpty() }
-                
-                if (lines.size >= 3) {
-                    val name = lines[0]
-                    val timeWeekStr = lines[1] // 例: "周四第3,4节{第1-17周|单周}"
-                    val teacher = lines[2]
-                    val classroom = if (lines.size >= 4) lines[3] else "" // 第四行是上课地点，有些可能缺失
 
-                    if (timeWeekStr.length >= 2) {
-                        val dayOfWeek = parseDay(timeWeekStr.substring(0, 2))
-                        val (startSection, endSection) = parseSections(timeWeekStr)
-                        val weeks = parseWeeks(timeWeekStr)
-                        
-                        if (dayOfWeek != -1 && startSection != -1) {
-                            courses.add(
-                                RemoteCourse(
-                                    name = name,
-                                    teacher = teacher,
-                                    classroom = classroom,
-                                    dayOfWeek = dayOfWeek,
-                                    startSection = startSection,
-                                    endSection = endSection,
-                                    weeks = weeks
-                                )
-                            )
-                        }
-                    }
+    fun parseHtml(html: String): List<RemoteCourse> = parseHtmlDetailed(html).courses
+
+    /**
+     * [skippedRecords] 统计页面里存在课程块、但时间位置解析不出来而被丢弃的记录，
+     * 供预览层把静默丢课变成显式提示。
+     */
+    fun parseHtmlDetailed(html: String): JwxtParseResult {
+        val document = Jsoup.parse(html)
+        val courses = mutableListOf<RemoteCourse>()
+        var skippedRecords = 0
+
+        // 列表字段带有稳定标签，但节次单元格也可能通过 rowspan 覆盖多条课程行。
+        val table = document.getElementById("kblist_table")
+            ?: throw IllegalArgumentException("未找到课表数据，请确认统一认证已经完成")
+
+        var currentDay = -1
+        var currentSections = -1 to -1
+        var remainingSectionRows = 0
+        var currentRowGroup: Element? = null
+        for (row in table.select("tr")) {
+            // rowspan 不能跨 tbody；缺少节次的孤立行不能借用上一组的节次。
+            if (row.parent() !== currentRowGroup) {
+                currentRowGroup = row.parent()
+                currentDay = -1
+                remainingSectionRows = 0
+            }
+            row.selectFirst("span.week")?.text()?.let { dayText ->
+                currentDay = parseDay(dayText)
+                remainingSectionRows = 0
+            }
+
+            val festival = row.selectFirst("span.festival")
+            if (festival != null) {
+                currentSections = parseSections(festival.text())
+                val span = festival.closest("td, th")?.attr("rowspan")?.toIntOrNull() ?: 1
+                remainingSectionRows = if (span == 0) {
+                    // HTML rowspan=0 表示覆盖当前行组的剩余行
+                    row.parent()?.children()?.count { it.tagName() == "tr" && it.elementSiblingIndex() >= row.elementSiblingIndex() } ?: 1
+                } else {
+                    span.coerceAtLeast(1)
                 }
             }
+            val hasSlot = remainingSectionRows > 0
+            if (hasSlot) remainingSectionRows--
+            val (startSection, endSection) = currentSections
+
+            val blocks = row.select("div.timetable_con")
+            if (!hasSlot || currentDay == -1 || startSection == -1) {
+                skippedRecords += blocks.count { !isPendingCourseBlock(it) }
+                continue
+            }
+
+            for (block in blocks) {
+                if (isPendingCourseBlock(block)) continue
+
+                parseCourseBlock(block, currentDay, startSection, endSection)
+                    ?.let(courses::add)
+            }
         }
-        
-        return courses
+
+        return JwxtParseResult(courses, skippedRecords)
     }
-    
+
+    private fun parseCourseBlock(
+        block: Element,
+        dayOfWeek: Int,
+        startSection: Int,
+        endSection: Int
+    ): RemoteCourse? {
+        val name = block.selectFirst(".title")
+            ?.text()
+            ?.cleanDisplayText()
+            .orEmpty()
+        if (name.isBlank()) return null
+
+        val details = block.select("p font").joinToString(" ") { it.text() }
+        val weeks = parseWeeks(extractLabeledValue(details, "周数"))
+        if (weeks.isEmpty()) return null
+
+        return RemoteCourse(
+            name = name,
+            teacher = extractLabeledValue(details, "教师").cleanDisplayText(),
+            classroom = extractLabeledValue(details, "上课地点").cleanDisplayText(),
+            credit = extractLabeledValue(details, "学分").cleanDisplayText(),
+            courseNature = extractLabeledValue(details, "课程性质").cleanDisplayText(),
+            dayOfWeek = dayOfWeek,
+            startSection = startSection,
+            endSection = endSection,
+            weeks = weeks
+        )
+    }
+
+    // 红色斜体是“待筛选”课程，不属于已经选上的课表。
+    private fun isPendingCourseBlock(block: Element): Boolean {
+        return block.selectFirst(".title font")
+            ?.attr("color")
+            ?.trim()
+            ?.lowercase() == "red"
+    }
+
+    private fun extractLabeledValue(text: String, label: String): String {
+        val labels = listOf("周数", "校区", "上课地点", "教师", "学分", "课程性质")
+        val followingLabels = labels.joinToString("|") { Regex.escape(it) }
+        val regex = Regex(
+            "${Regex.escape(label)}\\s*[:：]\\s*(.*?)(?=\\s*(?:$followingLabels)\\s*[:：]|$)"
+        )
+        return regex.find(text)?.groupValues?.get(1).orEmpty().trim()
+    }
+
     private fun parseDay(dayStr: String): Int {
-        return when (dayStr) {
-            "周一" -> 1
-            "周二" -> 2
-            "周三" -> 3
-            "周四" -> 4
-            "周五" -> 5
-            "周六" -> 6
-            "周日", "周天" -> 7
+        return when (dayStr.trim()) {
+            "星期一", "周一" -> 1
+            "星期二", "周二" -> 2
+            "星期三", "周三" -> 3
+            "星期四", "周四" -> 4
+            "星期五", "周五" -> 5
+            "星期六", "周六" -> 6
+            "星期日", "星期天", "周日", "周天" -> 7
             else -> -1
         }
     }
-    
-    private fun parseSections(timeWeekStr: String): Pair<Int, Int> {
-        val sectionRegex = Regex("第([\\d,]+)节")
-        val match = sectionRegex.find(timeWeekStr)
-        if (match != null) {
-            val sections = match.groupValues[1].split(",").mapNotNull { it.toIntOrNull() }.sorted()
-            if (sections.isNotEmpty()) {
-                return Pair(sections.first(), sections.last())
-            }
+
+    private fun parseSections(sectionText: String): Pair<Int, Int> {
+        val sections = Regex("\\d+")
+            .findAll(sectionText)
+            .mapNotNull { it.value.toIntOrNull() }
+            .toList()
+        return if (sections.isEmpty()) {
+            -1 to -1
+        } else {
+            sections.minOrNull()!! to sections.maxOrNull()!!
         }
-        return Pair(-1, -1)
     }
-    
-    private fun parseWeeks(timeWeekStr: String): List<Int> {
-        // 解析 "{第1-17周|单周}" 或 "{第12-14周}"
-        val weekRegex = Regex("\\{第(.*?)(周|节)(\\|(.*))?\\}")
-        val match = weekRegex.find(timeWeekStr)
-        if (match != null) {
-            val rangesStr = match.groupValues[1]
-            val oddEvenType = match.groupValues[4]
-            
-            val allWeeks = mutableListOf<Int>()
-            val ranges = rangesStr.split(",")
-            for (range in ranges) {
-                val bounds = range.split("-")
-                if (bounds.size == 2) {
-                    val start = bounds[0].toIntOrNull() ?: continue
-                    val end = bounds[1].toIntOrNull() ?: continue
-                    allWeeks.addAll((start..end).toList())
-                } else {
-                    bounds.firstOrNull()?.toIntOrNull()?.let { allWeeks.add(it) }
+
+    private fun parseWeeks(weekText: String): List<Int> {
+        if (weekText.isBlank()) return emptyList()
+
+        val normalized = weekText
+            .replace('（', '(')
+            .replace('）', ')')
+            .replace(Regex("[—–－~～至]"), "-")
+            .replace("第", "")
+            .replace("周", "")
+
+        val allWeeks = linkedSetOf<Int>()
+        normalized
+            .replace(Regex("[()]"), "")
+            .split(Regex("[,，、;；]"))
+            .forEach { part ->
+                val bounds = Regex("\\d+")
+                    .findAll(part)
+                    .mapNotNull { it.value.toIntOrNull() }
+                    .toList()
+                val partWeeks = when {
+                    bounds.size >= 2 -> {
+                        val start = bounds.first()
+                        val end = bounds.last()
+                        if (start in 1..MAX_WEEK && end in start..MAX_WEEK) {
+                            (start..end).toList()
+                        } else emptyList()
+                    }
+                    bounds.size == 1 && bounds.first() in 1..MAX_WEEK -> {
+                        listOf(bounds.first())
+                    }
+                    else -> emptyList()
                 }
+                // 单双周只作用于当前逗号分段，例如 1-3周(单),4-18周。
+                allWeeks.addAll(when {
+                    part.contains("单") && !part.contains("双") -> partWeeks.filter { it % 2 == 1 }
+                    part.contains("双") && !part.contains("单") -> partWeeks.filter { it % 2 == 0 }
+                    else -> partWeeks
+                })
             }
-            
-            return when {
-                oddEvenType.contains("单") -> allWeeks.filter { it % 2 != 0 }
-                oddEvenType.contains("双") -> allWeeks.filter { it % 2 == 0 }
-                else -> allWeeks
-            }
-        }
-        return emptyList()
+
+        return allWeeks.sorted()
+    }
+
+    private fun String.cleanDisplayText(): String =
+        trim()
+            .replace(Regex("\\s+"), " ")
+            .replace(Regex("\\s+([（(])"), "$1")
+
+    private companion object {
+        const val MAX_WEEK = 60
     }
 }

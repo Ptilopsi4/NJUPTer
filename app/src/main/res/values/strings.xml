@@ -27,20 +27,36 @@
     <string name="edit_course">Edit Course</string>
     <string name="course_details">Course Details</string>
     <string name="course_name">Course Name</string>
+    <string name="note">Note</string>
+    <string name="attendance_type">Attendance Type</string>
+
+    <string name="card_color_tone">Card Color Tone</string>
+    <string name="card_color_tone_summary">Adjust the intensity of course card colors</string>
+    <string name="card_color_tone_soft">Soft</string>
+    <string name="card_color_tone_standard">Standard</string>
+    <string name="card_color_tone_vivid">Vivid</string>
     <string name="teacher">Teacher</string>
     <string name="classroom">Classroom</string>
     <string name="time_settings">Time Settings</string>
     <string name="day_of_week">Day of Week</string>
     <string name="start_sec">Start Sec</string>
     <string name="end_sec">End Sec</string>
+    <string name="section_range">Section %1$s - %2$s</string>
+    <string name="section_conflict_blocked">Conflicting sections: %1$s. Change sections or weeks before saving.</string>
     <string name="weeks">Weeks</string>
     <string name="weeks_none">None</string>
     <string name="weeks_selected">selected</string>
     <string name="customize">Customize</string>
     <string name="card_color">Card Color</string>
     <string name="auto">A</string>
-    <string name="save">Save</string>
     <string name="delete">Delete</string>
+    <string name="delete_course">Delete Course</string>
+    <string name="delete_course_title">Delete this course session?</string>
+    <string name="delete_course_message">This will remove this course session. You can undo this afterwards.</string>
+    <string name="unnamed_course">Unnamed course</string>
+    <string name="not_set">Not set</string>
+    <string name="course_credit">Credits</string>
+    <string name="course_nature">Course type</string>
 
     <!-- Week Picker Dialog -->
     <string name="select_weeks">Select Weeks</string>
@@ -54,7 +70,6 @@
 
     <!-- Me Screen -->
     <string name="show_weekends">Show Weekends</string>
-    <string name="show_weekends_desc">Display Saturday and Sunday in timetable</string>
 
     <!-- Timetable Selector Dialog -->
     <string name="new_timetable">New Timetable</string>
@@ -62,15 +77,17 @@
     <string name="create">Create</string>
     <string name="select_timetable">Select Timetable</string>
     <string name="last_modified">Last modified</string>
+    <string name="delete_timetable_title">Delete \"%1$s\"?</string>
+    <string name="delete_timetable_message">This timetable and all its courses will be permanently deleted. This action cannot be undone.</string>
+    <string name="cd_delete_timetable">Delete Timetable</string>
 
     <!-- Week Selection Dialog -->
     <string name="jump_to_week">Jump to Week</string>
 
     <!-- Content Descriptions -->
-    <string name="cd_switch_timetable">Switch Timetable</string>
-    <string name="cd_previous_week">Previous Week</string>
-    <string name="cd_next_week">Next Week</string>
     <string name="cd_add_course">Add Course</string>
+    <string name="cd_undo">Undo</string>
+    <string name="undo_done">Last change undone</string>
     <string name="cd_selected">Selected</string>
     <string name="today">Today</string>
 
@@ -86,8 +103,6 @@
     <string name="no_timetable_title">No Timetable</string>
     <string name="no_timetable_desc">Create a new timetable to get started</string>
     <string name="create_timetable">Create Timetable</string>
-    <string name="session_times">Duration of each class</string>
-    <string name="session_times_desc">Edit start/end times for each session</string>
     <string name="cur_timetable_settings">Edit Current Timetable</string>
 
     <!-- Session Time Editor Dialog -->
@@ -103,10 +118,14 @@
 
     <!-- Import Preview Dialog -->
     <string name="import_preview">Import Preview</string>
+    <string name="import_failed">Import Failed</string>
     <string name="imported_timetable_name">Imported Timetable</string>
+    <string name="import_semester_autofilled">Prefilled from the JWXT homepage calendar, editable</string>
     <string name="new_timetable_name">New Timetable Name</string>
     <string name="import_desc">A new timetable will be created automatically.</string>
     <string name="create_and_import">Create and Import</string>
+    <string name="import_summary">%1$d courses, %2$d sessions</string>
+    <string name="import_summary_with_skipped">%1$d courses, %2$d sessions; %3$d records skipped (could not be parsed)</string>
 
     <!-- Jwxt Import -->
     <string name="jwxt_login_title">Campus Authentication</string>
@@ -117,35 +136,115 @@
 
     <!-- Course Editor -->
     <string name="save_btn">Save</string>
-    <string name="cd_timetable">Timetable</string>
     <string name="cd_settings">Settings</string>
 
     <!-- Validation Errors -->
     <string name="error_start_after_end">Error: Start section (%1$d) cannot be greater than End section (%2$d).</string>
     <string name="error_no_week">Error: At least one week must be selected.</string>
     <string name="error_time_conflict">Error: Time conflict with existing session: Day %1$d, Sections %2$d-%3$d.</string>
-    <string name="error_course_duplicate">Error: Course \'%1$s\' with teacher \'%2$s\' in room \'%3$s\' already exists.</string>
-    <string name="error_unknown">Unknown error</string>
+    <string name="error_course_duplicate">Error: Course \'%1$s\' with teacher \'%2$s\' already exists.</string>
 
     <!-- Import Summary -->
-    <string name="import_summary">Found %1$d new courses, %2$d new sessions.</string>
     <string name="default_timetable_name">My Timetable</string>
     <string name="course_reminder_channel_name">Course Reminder</string>
-    <string name="course_reminder_channel_desc">Notifies 10 minutes before class starts</string>
-    <string name="course_reminder_title">Class starts in 10 minutes</string>
-    <string name="course_reminder_content">%1$s · %2$s · %3$s · %4$s</string>
+    <string name="course_reminder_channel_desc">Notifies before class starts</string>
+    <string name="course_reminder_title">Class starts in %1$d minutes</string>
+    <string name="reminder_lead_time">Notifications</string>
+    <string name="reminder_lead_time_summary">Minutes before class to notify</string>
+    <string name="reminder_lead_min_value">%1$d min</string>
+    <string name="reminder_lead_minutes_label">Minutes</string>
+    <string name="reminder_lead_range_hint">Range 0–120; 0 = notify at class start</string>
+    <string name="reminder_lead_empty_hint">Nothing selected — reminders are off</string>
+    <string name="reminder_lead_add">Add this lead time</string>
+    <string name="reminder_lead_disabled">Off</string>
+    <string name="about">About</string>
+    <string name="about_description">A lightweight, local-first timetable app for NJUPT students.</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_project_home">Project home</string>
+    <string name="about_open_link_failed">Couldn\'t open the link</string>
+    <string name="minutes_unit">min</string>
+    <string name="course_reminder_toggle">Class reminder</string>
+    <string name="course_reminder_toggle_summary">Notify before this course starts</string>
     <string name="notification_permission">Notification Permission</string>
-    <string name="notification_permission_desc">Required to display class reminders</string>
     <string name="battery_optimization">Battery Optimization</string>
-    <string name="battery_optimization_desc">Allow running in background for timely reminders</string>
-    <string name="current_time_indicator">Current Time Indicator</string>
+    <string name="background_high_power">Background High Power</string>    <string name="current_time_indicator">Current Time Indicator</string>
     <string name="cannot_open_settings">Unable to open settings</string>
     <string name="language">Language</string>
     <string name="language_en">English</string>
     <string name="language_zh">Chinese</string>
-    <string name="close">Close</string>
-    <string name="status_enabled">Enabled</string>
-    <string name="status_disabled">Disabled</string>
-    <string name="go_to_settings">Go to settings</string>
+    <string name="language_system">Follow System</string>
+
+    <!-- Widget -->
+    <string name="widget_description">Shows today\'s courses on your home screen</string>
+    <string name="widget_settings">Home Screen Widget</string>
+    <string name="widget_background">Background Image</string>
+    <string name="widget_background_desc">Select an image to use as the widget background</string>
+    <string name="widget_transparency">Background Transparency</string>
+    <string name="widget_transparency_desc">Adjust how much the background image shows through</string>
+    <string name="widget_remove_background">Remove</string>
+    <string name="widget_pick_image">Pick Image</string>
+    <string name="widget_preview">Preview</string>
+    <string name="widget_no_courses_today">No courses today</string>
+    <string name="widget_today_format">Today / %1$s</string>
+    <string name="widget_tomorrow_format">Tomorrow / %1$s</string>
+    <string name="widget_courses_completed">Today\'s courses are complete</string>
+    <string name="widget_section_range">Sec %1$d-%2$d</string>
+    <string name="widget_more_courses">+%1$d more</string>
+    <string name="widget_instances">Widget instances</string>
+    <string name="widget_mode_solid">Solid</string>
+    <string name="widget_mode_image">Image</string>
+    <string name="widget_solid_color">Solid color</string>
+    <string name="widget_solid_follow_theme">Follow theme</string>
+    <string name="widget_pin_to_home">Add to Home Screen</string>
+    <string name="widget_pin_failed">Could not start the add request</string>
+    <string name="widget_pinned">Widget added to Home Screen</string>
+    <string name="widget_pin_guide_hint">Requested the system add dialog. If it did not appear, add manually:</string>
+    <string name="widget_pin_guide_steps">1. Long-press an empty area on the Home screen\n2. Choose “Widgets”\n3. Find NJUPTer and drag it to the Home screen</string>
+    <string name="widget_bg_edit_hint">Drag or pinch to adjust the background</string>
+
+    <!-- Appearance and motion -->
+    <string name="back">Back</string>
+    <string name="theme_settings">Theme and motion</string>
+    <string name="theme_settings_summary">Colors, dark mode, and navigation motion</string>
+    <string name="appearance_settings">Appearance</string>
+    <string name="motion_settings">Motion</string>
+    <string name="theme_mode">Theme mode</string>
+    <string name="theme_mode_summary">Choose how the app follows light and dark mode</string>
+    <string name="theme_mode_system">Follow system</string>
+    <string name="theme_mode_light">Light</string>
+    <string name="theme_mode_dark">Dark</string>
+    <string name="dynamic_color">Dynamic color</string>
+    <string name="dynamic_color_summary">Use colors from your wallpaper</string>
+    <string name="dynamic_color_unavailable">Dynamic color requires Android 12 or newer</string>
+    <string name="predictive_back_animation">Predictive back animation</string>
+    <string name="predictive_back_animation_summary">Preview the destination while swiping back</string>
+    <string name="predictive_back_animation_none">None</string>
+    <string name="predictive_back_animation_aosp">AOSP cross-activity</string>
+    <string name="predictive_back_animation_miuix">MIUIX</string>
+    <string name="predictive_back_animation_scale">Scale</string>
+    <string name="predictive_back_animation_ksu_classic">KernelSU classic</string>
+    <string name="predictive_back_exit_direction">Exit direction</string>
+    <string name="predictive_back_exit_direction_summary">Choose where the current page moves</string>
+    <string name="predictive_back_exit_direction_follow_gesture">Follow gesture</string>
+    <string name="predictive_back_exit_direction_always_right">Always right</string>
+    <string name="predictive_back_exit_direction_always_left">Always left</string>
+    <string name="widget_settings_summary">Preview and customize the home screen widget</string>
+    <string name="language_settings_summary">Change the language used by the app</string>
+    <string name="current_time_indicator_summary">Show the current time line on the timetable</string>
+    <string name="notification_permission_summary">Allow course reminder notifications</string>
+    <string name="battery_optimization_summary">Keep scheduled reminders reliable in the background</string>
+    <string name="background_high_power_summary">Allow background power use on some devices so reminders fire on time</string>
+    <string name="hide_from_recents">Hide from Recents</string>
+    <string name="hide_from_recents_summary">Hide the app from the Recents list after exiting</string>
+    <string name="reminder_reliability">Reminder reliability</string>
+    <string name="exact_alarm">Exact alarms</string>
+    <string name="exact_alarm_summary">Allow reminders to trigger exactly on time</string>
+    <string name="discard_changes_title">Discard unsaved changes?</string>
+    <string name="discard">Discard</string>
+    <string name="granted">On</string>
+    <string name="not_granted">Off</string>
+    <string name="keep_editing">Keep editing</string>
+    <string name="widget_pick_image_failed">Failed to load the selected image</string>
+    <string name="widget_preview_no_data">No timetable data yet — the preview shows real courses once added</string>
 
 </resources>

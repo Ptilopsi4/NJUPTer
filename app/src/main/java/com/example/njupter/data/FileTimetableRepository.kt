@@ -32,6 +32,45 @@ class FileTimetableRepository(
 
     private val _isInitialized = MutableStateFlow(false)
 
+    // --- 撤销快照栈（仅内存，本次运行有效；按课表隔离） ---
+    private data class UndoSnapshot(
+        val timetableId: String,
+        val courses: List<CourseInfo>,
+        val sessions: List<CourseSession>,
+        val timestamp: Long
+    )
+
+    private val undoStacks = mutableMapOf<String, ArrayDeque<UndoSnapshot>>()
+    private val _undoAvailable = MutableStateFlow(false)
+
+    override fun getUndoAvailable(): StateFlow<Boolean> = _undoAvailable.asStateFlow()
+
+    private companion object {
+        const val MAX_UNDO_STEPS = 20
+        // 时间窗口内（毫秒）的连续修改视为同一次用户操作，合并为一个撤销单元
+        const val UNDO_MERGE_WINDOW_MS = 500L
+    }
+
+    // 每次课程数据变更前压入当前状态快照
+    private fun pushUndo() {
+        val id = _currentTimetableId.value ?: return
+        val stack = undoStacks.getOrPut(id) { ArrayDeque() }
+        stack.addLast(
+            UndoSnapshot(
+                timetableId = id,
+                courses = _courseInfos.value,
+                sessions = _courseSessions.value,
+                timestamp = System.currentTimeMillis()
+            )
+        )
+        while (stack.size > MAX_UNDO_STEPS) stack.removeFirst()
+        refreshUndoAvailable()
+    }
+
+    private fun refreshUndoAvailable() {
+        _undoAvailable.value = undoStacks[_currentTimetableId.value]?.isNotEmpty() == true
+    }
+
     override fun getIsInitialized(): StateFlow<Boolean> = _isInitialized.asStateFlow()
 
     init {
@@ -97,6 +136,7 @@ class FileTimetableRepository(
         _courseSessions.value = data.sessions
 
         settingsRepository.setLastSelectedTimetableId(id)
+        refreshUndoAvailable()
     }
 
     override suspend fun createTimetable(name: String, startDate: Long, totalWeeks: Int, showWeekends: Boolean, sessionTimes: List<String>) {
@@ -124,17 +164,28 @@ class FileTimetableRepository(
     }
 
     override suspend fun deleteTimetable(id: String) {
+        // 删除当前课表时切换到另一张；若没有其他课表则清空当前状态进入空态
+        val others = _availableTimetables.value.filterNot { it.id == id }
         if (id == _currentTimetableId.value) {
-             val first = _availableTimetables.value.firstOrNull()
-             if (first != null) {
-                 switchTimetable(first.id)
-             }
+            val next = others.firstOrNull()
+            if (next != null) {
+                switchTimetable(next.id)
+            } else {
+                _currentTimetableId.value = null
+                _currentTimetableName.value = ""
+                _courseInfos.value = emptyList()
+                _courseSessions.value = emptyList()
+                settingsRepository.setLastSelectedTimetableId(null)
+            }
         }
+        undoStacks.remove(id)
         dataSource.deleteTimetable(id)
         refreshTimetableList()
+        refreshUndoAvailable()
     }
 
     override suspend fun addCourse(course: CourseInfo) {
+        pushUndo()  // 先快照当前状态
         _courseInfos.update { current ->    // 先改内存中的状态持有
             current + course
         }
@@ -142,6 +193,7 @@ class FileTimetableRepository(
     }
 
     override suspend fun addSession(session: CourseSession) {
+        pushUndo()
         _courseSessions.update { current ->
             current + session
         }
@@ -149,6 +201,7 @@ class FileTimetableRepository(
     }
 
     override suspend fun updateCourse(course: CourseInfo) {
+        pushUndo()
         _courseInfos.update { current ->
             current.map { if (it.id == course.id) course else it }
         }
@@ -156,6 +209,7 @@ class FileTimetableRepository(
     }
 
     override suspend fun updateSession(oldSession: CourseSession, newSession: CourseSession) {
+        pushUndo()
         _courseSessions.update { current ->
             current.map {
                 // CourseSession 没有唯一 ID，需要比较所有字段或对象引用
@@ -166,6 +220,7 @@ class FileTimetableRepository(
     }
 
     override suspend fun deleteSession(session: CourseSession) {
+        pushUndo()
         _courseSessions.update { current ->
             current - session
         }
@@ -173,6 +228,7 @@ class FileTimetableRepository(
     }
 
     override suspend fun importTimetableData(newCourses: List<CourseInfo>, newSessions: List<CourseSession>) {
+        pushUndo()
         _courseInfos.update { current ->
             current + newCourses
         }
@@ -180,5 +236,35 @@ class FileTimetableRepository(
             current + newSessions
         }
         saveData()
+    }
+
+    override suspend fun undoLastChange() {
+        val currentId = _currentTimetableId.value ?: return
+        val stack = undoStacks[currentId]
+        if (stack == null || stack.isEmpty()) {
+            refreshUndoAvailable()
+            return
+        }
+
+        // 收集与栈顶时间相邻（同一撤销单元）的快照
+        val baseTs = stack.last().timestamp
+        val popped = mutableListOf<UndoSnapshot>()
+        while (stack.isNotEmpty()) {
+            val top = stack.last()
+            if (popped.isEmpty()) {
+                popped.add(stack.removeLast())
+            } else if (top.timestamp >= baseTs - UNDO_MERGE_WINDOW_MS) {
+                popped.add(stack.removeLast())
+            } else {
+                break
+            }
+        }
+
+        // 恢复该单元中最早的状态（整组回退）
+        val snapshot = popped.last()
+        _courseInfos.value = snapshot.courses
+        _courseSessions.value = snapshot.sessions
+        saveData()
+        refreshUndoAvailable()
     }
 }

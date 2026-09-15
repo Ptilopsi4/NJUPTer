@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
-        <!-- 允许 jwxt.njupt.edu.cn 及其子域名的 HTTP 流量 -->
+        <!-- 新旧教务系统目前均使用 HTTP。 -->
+        <domain includeSubdomains="true">jwglxt.njupt.edu.cn</domain>
         <domain includeSubdomains="true">jwxt.njupt.edu.cn</domain>
         <domain includeSubdomains="true">i.njupt.edu.cn</domain>
     </domain-config>

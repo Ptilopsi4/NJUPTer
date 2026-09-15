@@ -6,90 +6,124 @@ import com.example.njupter.data.import.RemoteCourse
 import java.util.UUID
 
 /**
- * 将从远程爬取的数据映射到本地域领域模型，并处理重名/匹配
+ * 将从远程爬取的数据映射到本地域领域模型，并处理重名/匹配。
  */
 class TimetableImportMatcher {
-    
+
     data class ImportResult(
         val newCourses: List<CourseInfo>,
         val newSessions: List<CourseSession>,
-        // 比如想提供更新差异报告可以用这个
-        val summary: String
+        // 周次解析为空的远程记录数：无法安排到任何周，只能计数暴露给预览
+        val skippedRecords: Int = 0
     )
-    
+
     fun matchAndConvert(
         remoteCourses: List<RemoteCourse>,
         existingCourses: List<CourseInfo>,
-        existingSessions: List<CourseSession>,
-        summaryTemplate: (Int, Int) -> String = { courses, sessions -> "Found $courses new courses, $sessions new sessions." }
+        existingSessions: List<CourseSession>
     ): ImportResult {
-        
         val newInfos = mutableListOf<CourseInfo>()
-        val newSessions = mutableListOf<CourseSession>()
-        var importedCount = 0
+        val pendingSessions = linkedMapOf<SessionKey, CourseSession>()
 
-        // 去重策略示例：相同的课名、教师、地点视为同一门课 (复用同一个 Id)
-        // 使用一个 Map 帮助快速查找有没有已经转换过的 CourseInfo
+        // 同一门课每周多次、教室可能不同，所以教室归属 session 而不是课程；
+        // 课程同名同教师视为同一门。展示时仍保留教务系统返回的可读文本。
         val courseMap = mutableMapOf<String, CourseInfo>()
-        
-        // 先把现有的课放进字典（如果需要合并现有和新导入）
-        existingCourses.forEach { 
-            val key = "${it.name}|${it.teacher}|${it.classroom}"
-            courseMap[key] = it
+        existingCourses.forEach {
+            courseMap[courseKey(it.name, it.teacher)] = it
         }
 
+        val existingWeeksBySession = existingSessions
+            .groupBy {
+                SessionKey(
+                    courseId = it.courseId,
+                    day = it.day,
+                    startSection = it.startSection,
+                    endSection = it.endSection,
+                    classroom = canonicalize(it.classroom.orEmpty())
+                )
+            }
+            .mapValues { (_, sessions) -> sessions.flatMap { it.weeks }.toSet() }
+
+        var skippedRecords = 0
         remoteCourses.forEach { remote ->
-            val key = "${remote.name}|${remote.teacher}|${remote.classroom}"
-            
-            // 如果不存在，创建一个新的 CourseInfo
-            val courseInfo = courseMap.getOrPut(key) {
-                // 新课程，需要入库
+            if (remote.weeks.isEmpty()) {
+                skippedRecords++
+                return@forEach
+            }
+
+            val courseInfo = courseMap.getOrPut(
+                courseKey(remote.name, remote.teacher)
+            ) {
                 val newCourse = CourseInfo(
                     id = UUID.randomUUID().toString(),
-                    name = remote.name,
-                    teacher = remote.teacher,
-                    classroom = remote.classroom,
-                    colorIndex = -1 // Auto 颜色
+                    name = cleanDisplayText(remote.name),
+                    teacher = cleanDisplayText(remote.teacher),
+                    colorIndex = -1,
+                    credit = cleanDisplayText(remote.credit),
+                    courseNature = cleanDisplayText(remote.courseNature)
                 )
                 newInfos.add(newCourse)
                 newCourse
             }
 
-            // session 生成
-            val session = CourseSession(
+            // 教室必须进 session 键：同名同节次的单双周课可能换教室，
+            // 按周次并段时教室要跟着各自的周次走，不能被后到者覆盖
+            val sessionKey = SessionKey(
                 courseId = courseInfo.id,
                 day = remote.dayOfWeek,
                 startSection = remote.startSection,
                 endSection = remote.endSection,
-                weeks = remote.weeks
+                classroom = canonicalize(remote.classroom)
             )
-            
-            // 做简单的冲突检测：如果当前导入的 session 和现有的完全一致，就不重复添加
-            val isDuplicate = existingSessions.any { 
-                it.courseId == session.courseId && 
-                it.day == session.day && 
-                it.startSection == session.startSection && 
-                it.endSection == session.endSection 
-                // 可以加上 weeks 的比对，视逻辑严格程度
-            } || newSessions.any {
-                it.courseId == session.courseId && 
-                it.day == session.day && 
-                it.startSection == session.startSection && 
-                it.endSection == session.endSection
-            }
-            
-            if (!isDuplicate) {
-                newSessions.add(session)
-                importedCount++
-            }
+            val missingWeeks = remote.weeks
+                .asSequence()
+                .filter { it > 0 }
+                .filterNot { it in existingWeeksBySession[sessionKey].orEmpty() }
+                .toSet()
+            if (missingWeeks.isEmpty()) return@forEach
+
+            val previous = pendingSessions[sessionKey]
+            pendingSessions[sessionKey] = CourseSession(
+                courseId = courseInfo.id,
+                day = remote.dayOfWeek,
+                startSection = remote.startSection,
+                endSection = remote.endSection,
+                weeks = (previous?.weeks.orEmpty() + missingWeeks).distinct().sorted(),
+                classroom = cleanDisplayText(remote.classroom)
+            )
         }
-        
-        val totalNewCourses = newInfos.size
+
+        val newSessions = pendingSessions.values.toList()
         return ImportResult(
             newCourses = newInfos,
             newSessions = newSessions,
-            summary = summaryTemplate(totalNewCourses, importedCount)
+            skippedRecords = skippedRecords
         )
     }
-}
 
+    private fun courseKey(name: String, teacher: String): String =
+        listOf(name, teacher).joinToString("|") { canonicalize(it) }
+
+    private fun canonicalize(value: String): String =
+        value
+            .trim()
+            .lowercase()
+            .replace(Regex("\\s+"), "")
+            .replace('（', '(')
+            .replace('）', ')')
+            .replace(Regex("[—–－]"), "-")
+
+    private fun cleanDisplayText(value: String): String =
+        value
+            .trim()
+            .replace(Regex("\\s+"), " ")
+            .replace(Regex("\\s+([（(])"), "$1")
+
+    private data class SessionKey(
+        val courseId: String,
+        val day: Int,
+        val startSection: Int,
+        val endSection: Int,
+        val classroom: String
+    )
+}

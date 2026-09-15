@@ -3,8 +3,13 @@ package com.example.njupter.data
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import com.example.njupter.ui.animation.predictiveback.PredictiveBackAnimation
+import com.example.njupter.ui.animation.predictiveback.PredictiveBackExitDirection
+import com.example.njupter.ui.theme.AppThemeMode
+import com.example.njupter.ui.theme.CourseColorTone
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 interface SettingsRepository {
@@ -13,18 +18,75 @@ interface SettingsRepository {
     fun getAppLanguageTag(): Flow<String>
     suspend fun setAppLanguageTag(languageTag: String)
     fun getLastSelectedTimetableId(): Flow<String?>
-    suspend fun setLastSelectedTimetableId(id: String)
+    suspend fun setLastSelectedTimetableId(id: String?)
     fun getLastWeekRecords(): Flow<Map<String, Int>>
     suspend fun setLastWeekForTimetable(id: String, week: Int)
     fun getEnableCurrentTimeIndicator(): Flow<Boolean>
     suspend fun setEnableCurrentTimeIndicator(enabled: Boolean)
+    fun getAppThemeMode(): Flow<AppThemeMode>
+    suspend fun setAppThemeMode(mode: AppThemeMode)
+    fun getDynamicColorEnabled(): Flow<Boolean>
+    suspend fun setDynamicColorEnabled(enabled: Boolean)
+    fun getCourseColorTone(): Flow<CourseColorTone>
+    suspend fun setCourseColorTone(tone: CourseColorTone)
+    fun getPredictiveBackAnimation(): Flow<PredictiveBackAnimation>
+    suspend fun setPredictiveBackAnimation(animation: PredictiveBackAnimation)
+    fun getPredictiveBackExitDirection(): Flow<PredictiveBackExitDirection>
+    suspend fun setPredictiveBackExitDirection(direction: PredictiveBackExitDirection)
+    fun getReminderLeadMinutes(): Flow<List<Int>>
+    suspend fun setReminderLeadMinutes(minutes: List<Int>)
+    fun getHideFromRecents(): Flow<Boolean>
+    suspend fun setHideFromRecents(enabled: Boolean)
 
     fun peekLastSelectedTimetableId(): String? {
-        return (getLastSelectedTimetableId() as? MutableStateFlow)?.value
+        return (getLastSelectedTimetableId() as? StateFlow)?.value
     }
 
     fun peekAppLanguageTag(): String {
-        return (getAppLanguageTag() as? MutableStateFlow)?.value ?: ""
+        return (getAppLanguageTag() as? StateFlow)?.value ?: ""
+    }
+
+    fun peekAppThemeMode(): AppThemeMode {
+        return (getAppThemeMode() as? StateFlow)?.value ?: AppThemeMode.SYSTEM
+    }
+
+    fun peekDynamicColorEnabled(): Boolean {
+        return (getDynamicColorEnabled() as? StateFlow)?.value ?: true
+    }
+
+    fun peekCourseColorTone(): CourseColorTone {
+        return (getCourseColorTone() as? StateFlow)?.value ?: CourseColorTone.STANDARD
+    }
+
+    fun peekPredictiveBackAnimation(): PredictiveBackAnimation {
+        return (getPredictiveBackAnimation() as? StateFlow)?.value
+            ?: PredictiveBackAnimation.SCALE
+    }
+
+    fun peekPredictiveBackExitDirection(): PredictiveBackExitDirection {
+        return (getPredictiveBackExitDirection() as? StateFlow)?.value
+            ?: PredictiveBackExitDirection.FOLLOW_GESTURE
+    }
+
+    fun peekReminderLeadMinutes(): List<Int> {
+        return (getReminderLeadMinutes() as? StateFlow)?.value
+            ?: listOf(DEFAULT_REMINDER_LEAD_MINUTES)
+    }
+
+    fun peekHideFromRecents(): Boolean {
+        return (getHideFromRecents() as? StateFlow)?.value ?: false
+    }
+
+    companion object {
+        const val DEFAULT_REMINDER_LEAD_MINUTES = 10
+        const val MIN_REMINDER_LEAD_MINUTES = 0
+        const val MAX_REMINDER_LEAD_MINUTES = 120
+
+        /** 过滤越界值、去重并升序；空列表表示不排任何提醒。 */
+        fun normalizeLeadMinutes(raw: Iterable<Int>): List<Int> =
+            raw.filter { it in MIN_REMINDER_LEAD_MINUTES..MAX_REMINDER_LEAD_MINUTES }
+                .distinct()
+                .sorted()
     }
 }
 
@@ -36,6 +98,14 @@ class SharedPreferencesSettingsRepository(context: Context) : SettingsRepository
         private const val KEY_LAST_SELECTED_TIMETABLE_ID = "last_selected_timetable_id"
         private const val KEY_LAST_WEEK_PREFIX = "last_week_"
         private const val KEY_CURRENT_TIME_INDICATOR = "enable_current_time_indicator"
+        private const val KEY_APP_THEME_MODE = "app_theme_mode"
+        private const val KEY_DYNAMIC_COLOR = "dynamic_color"
+        private const val KEY_COURSE_COLOR_TONE = "course_color_tone"
+        private const val KEY_PREDICTIVE_BACK_ANIMATION = "predictive_back_animation"
+        private const val KEY_PREDICTIVE_BACK_EXIT_DIRECTION = "predictive_back_exit_direction"
+        private const val KEY_REMINDER_LEAD_MINUTES = "reminder_lead_minutes"
+        private const val KEY_REMINDER_LEAD_MINUTES_SET = "reminder_lead_minutes_set"
+        private const val KEY_HIDE_FROM_RECENTS = "hide_from_recents"
     }
 
     private fun readLastWeekRecords(): Map<String, Int> {
@@ -58,6 +128,33 @@ class SharedPreferencesSettingsRepository(context: Context) : SettingsRepository
     private val _lastSelectedTimetableId = MutableStateFlow<String?>(prefs.getString(KEY_LAST_SELECTED_TIMETABLE_ID, null))
     private val _lastWeekRecords = MutableStateFlow(readLastWeekRecords())
     private val _enableCurrentTimeIndicator = MutableStateFlow(prefs.getBoolean(KEY_CURRENT_TIME_INDICATOR, true))
+    private val _appThemeMode = MutableStateFlow(
+        prefs.enumValue(KEY_APP_THEME_MODE, AppThemeMode.SYSTEM)
+    )
+    private val _dynamicColorEnabled = MutableStateFlow(prefs.getBoolean(KEY_DYNAMIC_COLOR, true))
+    private val _courseColorTone = MutableStateFlow(
+        prefs.enumValue(KEY_COURSE_COLOR_TONE, CourseColorTone.STANDARD)
+    )
+    private val _predictiveBackAnimation = MutableStateFlow(
+        prefs.enumValue(KEY_PREDICTIVE_BACK_ANIMATION, PredictiveBackAnimation.SCALE)
+    )
+    private val _predictiveBackExitDirection = MutableStateFlow(
+        prefs.enumValue(
+            KEY_PREDICTIVE_BACK_EXIT_DIRECTION,
+            PredictiveBackExitDirection.FOLLOW_GESTURE
+        )
+    )
+    private val _reminderLeadMinutes = MutableStateFlow(loadReminderLeadMinutes())
+
+    // 旧版只存单个提前量：新键缺失时把旧值迁成唯一一段，老用户升级无感
+    private fun loadReminderLeadMinutes(): List<Int> {
+        val stored = prefs.getStringSet(KEY_REMINDER_LEAD_MINUTES_SET, null)
+            ?: return listOf(
+                prefs.getInt(KEY_REMINDER_LEAD_MINUTES, SettingsRepository.DEFAULT_REMINDER_LEAD_MINUTES)
+            )
+        return SettingsRepository.normalizeLeadMinutes(stored.mapNotNull { it.toIntOrNull() })
+    }
+    private val _hideFromRecents = MutableStateFlow(prefs.getBoolean(KEY_HIDE_FROM_RECENTS, false))
 
     override fun getShowWeekends(): Flow<Boolean> = _showWeekends.asStateFlow()
 
@@ -75,8 +172,11 @@ class SharedPreferencesSettingsRepository(context: Context) : SettingsRepository
 
     override fun getLastSelectedTimetableId(): Flow<String?> = _lastSelectedTimetableId.asStateFlow()
 
-    override suspend fun setLastSelectedTimetableId(id: String) {
-        prefs.edit { putString(KEY_LAST_SELECTED_TIMETABLE_ID, id) }
+    override suspend fun setLastSelectedTimetableId(id: String?) {
+        prefs.edit {
+            if (id == null) remove(KEY_LAST_SELECTED_TIMETABLE_ID)
+            else putString(KEY_LAST_SELECTED_TIMETABLE_ID, id)
+        }
         _lastSelectedTimetableId.value = id
     }
 
@@ -95,4 +195,66 @@ class SharedPreferencesSettingsRepository(context: Context) : SettingsRepository
         prefs.edit { putBoolean(KEY_CURRENT_TIME_INDICATOR, enabled) }
         _enableCurrentTimeIndicator.value = enabled
     }
+
+    override fun getAppThemeMode(): Flow<AppThemeMode> = _appThemeMode.asStateFlow()
+
+    override suspend fun setAppThemeMode(mode: AppThemeMode) {
+        prefs.edit { putString(KEY_APP_THEME_MODE, mode.name) }
+        _appThemeMode.value = mode
+    }
+
+    override fun getDynamicColorEnabled(): Flow<Boolean> = _dynamicColorEnabled.asStateFlow()
+
+    override suspend fun setDynamicColorEnabled(enabled: Boolean) {
+        prefs.edit { putBoolean(KEY_DYNAMIC_COLOR, enabled) }
+        _dynamicColorEnabled.value = enabled
+    }
+
+    override fun getCourseColorTone(): Flow<CourseColorTone> = _courseColorTone.asStateFlow()
+
+    override suspend fun setCourseColorTone(tone: CourseColorTone) {
+        prefs.edit { putString(KEY_COURSE_COLOR_TONE, tone.name) }
+        _courseColorTone.value = tone
+    }
+
+    override fun getPredictiveBackAnimation(): Flow<PredictiveBackAnimation> =
+        _predictiveBackAnimation.asStateFlow()
+
+    override suspend fun setPredictiveBackAnimation(animation: PredictiveBackAnimation) {
+        prefs.edit { putString(KEY_PREDICTIVE_BACK_ANIMATION, animation.name) }
+        _predictiveBackAnimation.value = animation
+    }
+
+    override fun getPredictiveBackExitDirection(): Flow<PredictiveBackExitDirection> =
+        _predictiveBackExitDirection.asStateFlow()
+
+    override suspend fun setPredictiveBackExitDirection(direction: PredictiveBackExitDirection) {
+        prefs.edit { putString(KEY_PREDICTIVE_BACK_EXIT_DIRECTION, direction.name) }
+        _predictiveBackExitDirection.value = direction
+    }
+
+    override fun getReminderLeadMinutes(): Flow<List<Int>> = _reminderLeadMinutes.asStateFlow()
+
+    override suspend fun setReminderLeadMinutes(minutes: List<Int>) {
+        val normalized = SettingsRepository.normalizeLeadMinutes(minutes)
+        prefs.edit {
+            putStringSet(KEY_REMINDER_LEAD_MINUTES_SET, normalized.map { it.toString() }.toSet())
+        }
+        _reminderLeadMinutes.value = normalized
+    }
+
+    override fun getHideFromRecents(): Flow<Boolean> = _hideFromRecents.asStateFlow()
+
+    override suspend fun setHideFromRecents(enabled: Boolean) {
+        prefs.edit { putBoolean(KEY_HIDE_FROM_RECENTS, enabled) }
+        _hideFromRecents.value = enabled
+    }
+}
+
+private inline fun <reified T : Enum<T>> SharedPreferences.enumValue(
+    key: String,
+    default: T
+): T {
+    val stored = getString(key, null) ?: return default
+    return enumValues<T>().firstOrNull { it.name == stored } ?: default
 }

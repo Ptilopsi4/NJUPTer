@@ -27,20 +27,36 @@
     <string name="edit_course">编辑课程</string>
     <string name="course_details">课程信息</string>
     <string name="course_name">课程名称</string>
+    <string name="note">备注</string>
+    <string name="attendance_type">考勤形式</string>
+
+    <string name="card_color_tone">课程卡片颜色</string>
+    <string name="card_color_tone_summary">调整课程卡片颜色的深浅浓度</string>
+    <string name="card_color_tone_soft">柔和</string>
+    <string name="card_color_tone_standard">标准</string>
+    <string name="card_color_tone_vivid">鲜明</string>
     <string name="teacher">教师</string>
     <string name="classroom">教室</string>
     <string name="time_settings">时间设置</string>
     <string name="day_of_week">星期</string>
     <string name="start_sec">开始节次</string>
     <string name="end_sec">结束节次</string>
+    <string name="section_range">第 %1$s - %2$s 节</string>
+    <string name="section_conflict_blocked">所选节次存在冲突：%1$s。请调整节次或周次后保存。</string>
     <string name="weeks">周次</string>
     <string name="weeks_none">无</string>
     <string name="weeks_selected">已选</string>
     <string name="customize">自定义</string>
     <string name="card_color">卡片颜色</string>
     <string name="auto">A</string>
-    <string name="save">保存</string>
     <string name="delete">删除</string>
+    <string name="delete_course">删除课程</string>
+    <string name="delete_course_title">删除该课程节次？</string>
+    <string name="delete_course_message">将删除该课程节次，删除后可通过撤销恢复。</string>
+    <string name="unnamed_course">未命名课程</string>
+    <string name="not_set">未设置</string>
+    <string name="course_credit">学分</string>
+    <string name="course_nature">课程性质</string>
 
     <!-- Week Picker Dialog -->
     <string name="select_weeks">选择周次</string>
@@ -54,7 +70,6 @@
 
     <!-- Me Screen -->
     <string name="show_weekends">显示周末</string>
-    <string name="show_weekends_desc">在课程表中显示周六和周日</string>
 
     <!-- Timetable Selector Dialog -->
     <string name="new_timetable">新建课程表</string>
@@ -62,15 +77,17 @@
     <string name="create">创建</string>
     <string name="select_timetable">选择课程表</string>
     <string name="last_modified">最后修改</string>
+    <string name="delete_timetable_title">删除\"%1$s\"？</string>
+    <string name="delete_timetable_message">该课程表及其所有课程将被永久删除，此操作无法撤销。</string>
+    <string name="cd_delete_timetable">删除课程表</string>
 
     <!-- Week Selection Dialog -->
     <string name="jump_to_week">跳转到周</string>
 
     <!-- Content Descriptions -->
-    <string name="cd_switch_timetable">切换课程表</string>
-    <string name="cd_previous_week">上一周</string>
-    <string name="cd_next_week">下一周</string>
     <string name="cd_add_course">添加课程</string>
+    <string name="cd_undo">撤销</string>
+    <string name="undo_done">已撤销最近修改</string>
     <string name="cd_selected">已选择</string>
 
     <!-- Settings Screen -->
@@ -85,8 +102,6 @@
     <string name="no_timetable_title">还没有课程表</string>
     <string name="no_timetable_desc">创建一个新课程表以开始</string>
     <string name="create_timetable">创建课程表</string>
-    <string name="session_times">每节课时间</string>
-    <string name="session_times_desc">调整每节课的开始/结束时间</string>
     <string name="cur_timetable_settings">编辑当前课表</string>
 
     <!-- Session Time Editor Dialog -->
@@ -102,10 +117,14 @@
 
     <!-- Import Preview Dialog -->
     <string name="import_preview">导入预览</string>
+    <string name="import_failed">导入失败</string>
     <string name="imported_timetable_name">导入的课表</string>
+    <string name="import_semester_autofilled">已按教务主页校历自动填充，可修改</string>
     <string name="new_timetable_name">新课表名称</string>
     <string name="import_desc">将为你自动创建一个全新的课表。</string>
     <string name="create_and_import">创建并导入</string>
+    <string name="import_summary">共 %1$d 门课程，%2$d 条上课安排</string>
+    <string name="import_summary_with_skipped">共 %1$d 门课程，%2$d 条上课安排，另有 %3$d 条记录无法解析已跳过</string>
 
     <!-- Jwxt Import -->
     <string name="jwxt_login_title">智慧校园统一认证</string>
@@ -116,33 +135,116 @@
 
     <!-- Course Editor -->
     <string name="save_btn">保存</string>
-    <string name="cd_timetable">课程表</string>
     <string name="cd_settings">设置</string>
 
     <!-- Validation Errors -->
     <string name="error_start_after_end">错误：开始节次（%1$d）不能大于结束节次（%2$d）。</string>
     <string name="error_no_week">错误：至少需要选择一周。</string>
     <string name="error_time_conflict">错误：与已有时段冲突：周%1$d，第%2$d-%3$d节。</string>
-    <string name="error_course_duplicate">错误：课程 \'%1$s\'（教师：%2$s，教室：%3$s）已存在。</string>
-    <string name="error_unknown">未知错误</string>
+    <string name="error_course_duplicate">错误：课程 \'%1$s\'（教师：%2$s）已存在。</string>
 
     <!-- Import Summary -->
-    <string name="import_summary">共发现新课程组合 %1$d 门，新增上课时段 %2$d 个。</string>
     <string name="default_timetable_name">我的课表</string>
     <string name="course_reminder_channel_name">课程提醒</string>
-    <string name="course_reminder_channel_desc">上课前10分钟通知</string>
-    <string name="course_reminder_title">课程还有10分钟开始</string>
+    <string name="course_reminder_channel_desc">上课前通知上课信息</string>
+    <string name="course_reminder_title">课程还有%1$d分钟开始</string>
+    <string name="reminder_lead_time">通知设置</string>
+    <string name="reminder_lead_time_summary">上课前多少分钟提醒</string>
+    <string name="reminder_lead_min_value">%1$d 分钟</string>
+    <string name="reminder_lead_minutes_label">分钟</string>
+    <string name="reminder_lead_range_hint">范围 0–120；0 = 上课时提醒</string>
+    <string name="reminder_lead_empty_hint">未选择任何提前量，将不提醒</string>
+    <string name="reminder_lead_add">添加该提前量</string>
+    <string name="reminder_lead_disabled">已关闭</string>
+    <string name="about">关于</string>
+    <string name="about_description">面向南邮学生的轻量本地课程表应用。</string>
+    <string name="about_version">版本 %1$s</string>
+    <string name="about_project_home">项目主页</string>
+    <string name="about_open_link_failed">无法打开链接</string>
+    <string name="minutes_unit">分钟</string>
+    <string name="course_reminder_toggle">上课提醒</string>
+    <string name="course_reminder_toggle_summary">上课前通知该课程</string>
     <string name="notification_permission">通知权限</string>
-    <string name="notification_permission_desc">用于显示课程提醒</string>
     <string name="battery_optimization">电池优化</string>
-    <string name="battery_optimization_desc">允许后台提醒以发送通知</string>
+    <string name="background_high_power">后台高耗电</string>
     <string name="current_time_indicator">当前时间指示器</string>
     <string name="cannot_open_settings">无法打开系统设置</string>
     <string name="language">语言</string>
     <string name="language_en">English</string>
     <string name="language_zh">中文</string>
-    <string name="close">关闭</string>
-    <string name="status_enabled">已启用</string>
-    <string name="status_disabled">已禁用</string>
+    <string name="language_system">跟随系统</string>
+
+    <!-- Widget -->
+    <string name="widget_description">在主屏幕上显示今日课程</string>
+    <string name="widget_settings">桌面小组件</string>
+    <string name="widget_background">背景图片</string>
+    <string name="widget_background_desc">选择一张图片作为小组件背景</string>
+    <string name="widget_transparency">背景透明度</string>
+    <string name="widget_transparency_desc">调整背景图片的显示程度</string>
+    <string name="widget_remove_background">移除</string>
+    <string name="widget_pick_image">选择图片</string>
+    <string name="widget_preview">预览</string>
+    <string name="widget_no_courses_today">今日无课程</string>
+    <string name="widget_today_format">今天 / %1$s</string>
+    <string name="widget_tomorrow_format">明天 / %1$s</string>
+    <string name="widget_courses_completed">当前课程已上完</string>
+    <string name="widget_section_range">第%1$d-%2$d节</string>
+    <string name="widget_more_courses">还有 %1$d 节</string>
+    <string name="widget_instances">小组件实例</string>
+    <string name="widget_mode_solid">纯色</string>
+    <string name="widget_mode_image">图片</string>
+    <string name="widget_solid_color">纯色颜色</string>
+    <string name="widget_solid_follow_theme">跟随主题</string>
+    <string name="widget_pin_to_home">添加到桌面</string>
+    <string name="widget_pin_failed">发起添加请求失败</string>
+    <string name="widget_pinned">小组件已添加到桌面</string>
+    <string name="widget_pin_guide_hint">已尝试发起系统添加请求。若未弹出系统确认窗口，请手动添加：</string>
+    <string name="widget_pin_guide_steps">1. 长按桌面空白处\n2. 选择「小组件」\n3. 找到 NJUPTer，拖动到桌面即可</string>
+    <string name="widget_bg_edit_hint">拖动或双指缩放，调整背景位置和大小</string>
+
+    <!-- 外观与动效 -->
+    <string name="back">返回</string>
+    <string name="theme_settings">主题与动效</string>
+    <string name="theme_settings_summary">颜色、深色模式与导航动效</string>
+    <string name="appearance_settings">外观</string>
+    <string name="motion_settings">动效</string>
+    <string name="theme_mode">主题模式</string>
+    <string name="theme_mode_summary">选择应用如何使用浅色与深色模式</string>
+    <string name="theme_mode_system">跟随系统</string>
+    <string name="theme_mode_light">浅色</string>
+    <string name="theme_mode_dark">深色</string>
+    <string name="dynamic_color">动态取色</string>
+    <string name="dynamic_color_summary">使用壁纸颜色生成应用配色</string>
+    <string name="dynamic_color_unavailable">动态取色需要 Android 12 或更高版本</string>
+    <string name="predictive_back_animation">预测性返回动画</string>
+    <string name="predictive_back_animation_summary">返回手势过程中预览目标页面</string>
+    <string name="predictive_back_animation_none">无</string>
+    <string name="predictive_back_animation_aosp">AOSP 跨页面</string>
+    <string name="predictive_back_animation_miuix">MIUIX</string>
+    <string name="predictive_back_animation_scale">缩放</string>
+    <string name="predictive_back_animation_ksu_classic">KernelSU 经典</string>
+    <string name="predictive_back_exit_direction">退出方向</string>
+    <string name="predictive_back_exit_direction_summary">选择当前页面离开的方向</string>
+    <string name="predictive_back_exit_direction_follow_gesture">跟随手势</string>
+    <string name="predictive_back_exit_direction_always_right">始终向右</string>
+    <string name="predictive_back_exit_direction_always_left">始终向左</string>
+    <string name="widget_settings_summary">预览并自定义桌面小组件</string>
+    <string name="language_settings_summary">更改应用界面使用的语言</string>
+    <string name="current_time_indicator_summary">在课表中显示当前时间线</string>
+    <string name="notification_permission_summary">允许应用发送课程提醒</string>
+    <string name="battery_optimization_summary">提高后台定时提醒的可靠性</string>
+    <string name="background_high_power_summary">部分机型需在系统设置中允许后台高耗电，提醒才能准时触发</string>
+    <string name="hide_from_recents">后台隐藏</string>
+    <string name="hide_from_recents_summary">退出后不在近期任务中显示</string>
+    <string name="reminder_reliability">提醒可靠性</string>
+    <string name="exact_alarm">精确闹钟</string>
+    <string name="exact_alarm_summary">允许提醒到点准时触发</string>
+    <string name="discard_changes_title">放弃未保存的更改？</string>
+    <string name="discard">放弃</string>
+    <string name="granted">已开启</string>
+    <string name="not_granted">未开启</string>
+    <string name="keep_editing">继续编辑</string>
+    <string name="widget_pick_image_failed">所选图片加载失败</string>
+    <string name="widget_preview_no_data">暂无课表数据，添加课程后这里会显示真实预览</string>
 
 </resources>

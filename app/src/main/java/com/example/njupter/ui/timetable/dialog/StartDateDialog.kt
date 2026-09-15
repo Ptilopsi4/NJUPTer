@@ -11,6 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.njupter.R
+import com.example.njupter.domain.datePickerMillisToLocalDateMillis
+import com.example.njupter.domain.localDateMillisToDatePickerMillis
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -19,14 +21,16 @@ fun StartDateDialog(
     onDismiss: () -> Unit,
     onConfirm: (Long) -> Unit
 ) {
-    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialDateMillis)
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = localDateMillisToDatePickerMillis(initialDateMillis)
+    )
     
     DatePickerDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = {
                 datePickerState.selectedDateMillis?.let {
-                    onConfirm(it)
+                    onConfirm(datePickerMillisToLocalDateMillis(it))
                 }
             }) {
                 Text(stringResource(R.string.confirm))
